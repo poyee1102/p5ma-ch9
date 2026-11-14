@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="通分大師：比較分數" />
+  <title>通分大師：比較分數</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --pink: #ff7eb6; --pink-deep: #ee4d93;
+      --sky: #5cc8ff; --sky-deep: #2a9adf;
+      --lemon: #ffe066; --lemon-deep: #e4b82a;
+      --lilac: #c9b6ff; --lilac-deep: #9b7af0;
+      --mint: #7eecc8; --mint-deep: #3cbc9a;
+      --ink: #3b2a55; --soft: #7a6588;
+      --line: #2c2144;
+      --safe-t: env(safe-area-inset-top, 0px);
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-l: env(safe-area-inset-left, 0px);
+      --safe-r: env(safe-area-inset-right, 0px);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; }
+    body {
+      position: fixed; inset: 0;
+      font-family: "Noto Sans TC", "PingFang HK", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(186, 230, 255, 0.62) 0%, rgba(186, 230, 255, 0) 36%),
+        linear-gradient(124deg, rgba(196, 236, 176, 0.5) 0%, rgba(196, 236, 176, 0) 48%),
+        linear-gradient(208deg, rgba(255, 226, 170, 0.4) 10%, rgba(255, 226, 170, 0) 52%),
+        linear-gradient(160deg, #f3fbff 0%, #e5f8df 38%, #e7f4ff 70%, #fff8e8 100%);
+      user-select: none;
+    }
+    .fun-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .deco { position: absolute; }
+    .deco svg { width: 100%; height: 100%; display: block; overflow: visible; }
+    .deco-lt { top: 4%; left: 11%; width: 34vmin; height: 34vmin; transform: rotate(-18deg); }
+    .deco-lbl { top: 43%; left: 1%; width: 29vmin; height: 29vmin; transform: rotate(16deg); }
+    .deco-lbr { top: 60%; left: 12.5%; width: 32vmin; height: 32vmin; transform: rotate(-12deg); }
+    .deco-rt { top: 6%; right: 3%; width: 33vmin; height: 33vmin; transform: rotate(14deg); }
+    .deco-rbl { top: 38%; right: 14%; width: 28vmin; height: 28vmin; transform: rotate(-22deg); }
+    .deco-rbr { top: 70%; right: 5%; width: 31vmin; height: 31vmin; transform: rotate(20deg); }
+    button, input { font-family: inherit; }
+    button { cursor: pointer; touch-action: manipulation; }
+    input { user-select: text; -webkit-user-select: text; }
+
+    @keyframes popIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+    @keyframes bounce { 0% { transform: scale(1); } 35% { transform: scale(0.88); } 70% { transform: scale(1.08); } 100% { transform: scale(1); } }
+    @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+    @keyframes pullGrow { from { transform: translateX(-50%) scaleY(0.08); opacity: 0; } to { transform: translateX(-50%) scaleY(1); opacity: 1; } }
+    @keyframes fallNum { from { transform: translateY(calc(-1 * var(--row))); opacity: 0.35; } to { transform: none; opacity: 1; } }
+    .bounce { animation: bounce 0.35s ease; }
+    .shake { animation: shake 0.4s ease; }
+
+    .app {
+      position: relative; z-index: 1;
+      height: 100%; width: 100%; overflow: hidden; display: flex;
+      padding: calc(6px + var(--safe-t)) calc(8px + var(--safe-r)) calc(6px + var(--safe-b)) calc(8px + var(--safe-l));
+    }
+    .screen {
+      display: none; width: min(1280px, 100%); margin: 0 auto;
+      height: 100%; min-height: 0; flex-direction: column; overflow: hidden;
+      animation: popIn 0.35s ease;
+    }
+    .screen.active { display: flex; }
+    .card {
+      background: rgba(255,255,255,0.92); border: 3px solid #fff; border-radius: 26px;
+      box-shadow: 0 14px 30px rgba(155, 122, 240, 0.18); min-height: 0; color: var(--ink);
+    }
+    .candy {
+      border: 0; border-radius: 999px; font-weight: 900; padding: 10px 18px;
+      transition: transform 0.12s ease, filter 0.12s ease;
+    }
+    .candy:hover { filter: brightness(1.05); }
+    .candy:active { transform: translateY(4px) scale(0.96); box-shadow: 0 2px 0 rgba(0,0,0,0.18) !important; animation: bounce 0.3s ease; }
+    .candy:disabled { filter: saturate(0.55); pointer-events: none; }
+    .sky { background: var(--sky); color: #0a3a5c; box-shadow: 0 6px 0 var(--sky-deep); }
+    .pink { background: var(--pink); color: #fff; box-shadow: 0 6px 0 var(--pink-deep); }
+    .lemon { background: var(--lemon); color: var(--ink); box-shadow: 0 6px 0 var(--lemon-deep); }
+    .mint { background: var(--mint); color: #165f4c; box-shadow: 0 6px 0 var(--mint-deep); }
+    .lilac { background: var(--lilac); color: #fff; box-shadow: 0 6px 0 var(--lilac-deep); }
+    .ghost { background: #fff; color: var(--soft); box-shadow: 0 5px 0 #ecd6de; }
+
+    #screen-login { align-items: center; justify-content: center; }
+    .login { width: min(400px, 100%); padding: 22px 18px 16px; text-align: center; }
+    .mascot {
+      width: 72px; height: 72px; margin: 0 auto 6px; border-radius: 50%;
+      display: grid; place-items: center; font-size: 36px; background: #fff;
+      box-shadow: 0 8px 0 #ffc2e0;
+      animation: floaty 2.8s ease-in-out infinite;
+    }
+    .mascot svg { width: 44px; height: auto; display: block; }
+    .title {
+      font-family: "Fredoka", "Noto Sans TC", sans-serif;
+      font-size: clamp(20px, 4.4vh, 30px); font-weight: 900; letter-spacing: 0.03em;
+      margin-bottom: 14px; line-height: 1.3; white-space: nowrap;
+      background: none; border: 0; box-shadow: none; padding: 0; text-shadow: none;
+    }
+    .title span:nth-child(odd) { color: var(--pink-deep); }
+    .title span:nth-child(even) { color: var(--lilac-deep); }
+    .field { text-align: left; margin-bottom: 10px; }
+    .field label { display: block; font-weight: 900; font-size: 15px; margin-bottom: 4px; }
+    .field input {
+      width: 100%; border: 3px solid #ffe1ec; border-radius: 16px;
+      padding: 10px 12px; font-size: 18px; font-weight: 800; outline: none; background: #fff;
+    }
+    .field input:focus { border-color: var(--pink); }
+    .start { width: 100%; font-size: 22px; padding: 12px; margin: 6px 0 10px; }
+    .teacher-btn {
+      width: 64px; height: 64px; border-radius: 50%; font-size: 13px; line-height: 1.15;
+      padding: 0; margin: 4px auto 0; display: grid; place-items: center;
+    }
+    .login-acts {
+      display: flex; flex-wrap: nowrap; justify-content: center; align-items: center;
+      gap: 22px; margin-top: 4px;
+    }
+    .login-acts .teacher-btn {
+      margin: 0; padding: 0; width: 64px; height: 64px; min-width: 64px;
+      flex: 0 0 64px; font-size: 13px; line-height: 1.2;
+    }
+    .rank-note {
+      flex-shrink: 0; font-family: "Fredoka", "Noto Sans TC", sans-serif;
+      font-weight: 900; font-size: clamp(24px, 3.6vh, 32px); line-height: 1.3;
+      color: var(--pink-deep); text-align: center; letter-spacing: 0.04em;
+    }
+    tr.r1 td { background: #fff6c9; }
+    tr.r2 td { background: #eef2f7; }
+    tr.r3 td { background: #f8ead8; }
+
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; margin-bottom: 4px; overflow: visible; }
+    .pill {
+      background: #fff; color: var(--ink); border-radius: 999px; padding: 6px 12px;
+      font-weight: 800; font-size: 16px; box-shadow: 0 4px 0 #f0d7e2; white-space: nowrap;
+    }
+    .timer-wrap { position: relative; flex-shrink: 0; }
+    .timer { font-variant-numeric: tabular-nums; background: #fff4cc; min-width: 92px; text-align: center; }
+    .timer.low, .timer.hit { background: #ffd0d8; color: #b42318; }
+    .timer.hit { animation: shake 0.4s ease; }
+    .time-hit {
+      position: absolute; left: 50%; top: 50%; z-index: 3;
+      font-weight: 900; font-size: 16px; color: #b42318;
+      pointer-events: none; opacity: 0; white-space: nowrap;
+      text-shadow: 0 1px 0 #fff, 0 0 8px #fff;
+    }
+    .time-hit.show { animation: timeHitPop 0.7s ease; }
+    @keyframes timeHitPop {
+      0% { opacity: 0; transform: translate(-50%, -40%) scale(0.8); }
+      22% { opacity: 1; transform: translate(-50%, -110%) scale(1.12); }
+      100% { opacity: 0; transform: translate(-50%, -160%) scale(0.96); }
+    }
+    .tiny { padding: 6px 12px; font-size: 13px; }
+
+    .play { flex: 1; min-height: 0; overflow: hidden; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+    .task-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-shrink: 0; }
+    .task-h h2 { font-size: clamp(18px, 2.8vh, 24px); line-height: 1.3; }
+    .task-h p { font-size: 16px; font-weight: 900; color: var(--soft); white-space: nowrap; }
+    .hintbar {
+      flex-shrink: 0; font-size: clamp(18px, 3vh, 22px); font-weight: 900; color: #5a4a72;
+      background: #e8fff6; border-radius: 12px; padding: 8px 12px; text-align: center;
+      line-height: 1.4; white-space: normal; overflow: hidden;
+    }
+    .board {
+      flex: 1; min-height: 0; position: relative;
+      display: flex; align-items: stretch; justify-content: center;
+      background: linear-gradient(180deg, #fff, #f3fbff);
+      border-radius: 22px; overflow: hidden;
+      box-shadow: inset 0 0 0 2px rgba(92, 200, 255, 0.35);
+    }
+    .board::before, .board::after {
+      content: ""; position: absolute; width: 54px; height: 14px; z-index: 2; pointer-events: none;
+      background: #ffe066;
+      box-shadow: 0 2px 0 rgba(228, 184, 42, 0.35);
+    }
+    .board::before { top: 10px; left: 4px; transform: rotate(-45deg); }
+    .board::after { top: 12px; right: 4px; transform: rotate(45deg); }
+    .stage {
+      position: relative; z-index: 1;
+      width: 100%; height: 100%; min-height: 0;
+      display: flex; align-items: stretch; justify-content: flex-start;
+      padding: 16px 14px 8px 14px;
+    }
+    .sheet {
+      --q: clamp(22px, 3.4vh, 30px);
+      --l: clamp(26px, 4vh, 36px);
+      --row: clamp(64px, 9vh, 86px);
+      --gap: 16px;
+      position: relative;
+      width: 100%; height: 100%; min-height: 0;
+      display: flex; flex-direction: column; align-items: stretch;
+    }
+    .stack {
+      flex: 1; min-height: 0; width: 100%; max-width: calc(100% - 360px); align-self: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      gap: var(--gap); font-size: var(--q); font-weight: 900;
+    }
+    .cmp-title {
+      flex-shrink: 0; display: flex; justify-content: center; align-items: center;
+      gap: 0.35em; font-weight: 900; font-size: 1em; white-space: nowrap;
+    }
+    .cmp-title .frac { font-size: 1em; }
+    .ladder-col { position: absolute; right: 8px; top: 0; }
+    .note-col { display: contents; }
+    .lcm-line {
+      display: flex; align-items: center; justify-content: center; flex-wrap: nowrap; gap: 0.35em;
+      font-weight: 900; font-size: inherit; line-height: 1.25;
+    }
+    .lcm-num { font-size: inherit; font-weight: 900; font-variant-numeric: tabular-nums; }
+    .note-col .frac, .chip .frac { font-size: 1em; }
+    .therefore {
+      flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
+      gap: 0.55em; margin-top: 0;
+    }
+    .there-row { display: flex; align-items: center; justify-content: center; gap: 0.4em; font-size: inherit; }
+    .therefore-mark { font-size: 1em; font-weight: 900; }
+    .sign { font-size: 1em; font-weight: 900; color: var(--pink-deep); min-width: 1em; text-align: center; }
+    .frac-side { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; min-width: 0; }
+    .frac {
+      display: inline-grid; grid-template-rows: auto 3px auto; justify-items: center;
+      min-width: 42px; font-weight: 900; font-size: clamp(26px, 4vh, 34px); line-height: 1;
+      font-family: "Noto Sans TC", sans-serif; font-variant-numeric: tabular-nums;
+    }
+    .frac i { width: 100%; min-width: 28px; height: 3px; background: var(--line); border-radius: 2px; margin: 2px 0; }
+    .eq { display: flex; align-items: center; gap: 0.45em; font-weight: 900; font-size: 1em; }
+    .eq .frac {
+      font-size: 1em; line-height: 1;
+      grid-template-rows: 1.35em 3px 1.35em;
+      align-items: center; min-width: 1.7em;
+    }
+    .eq .frac b { font-size: 1em; font-weight: 900; line-height: 1; }
+    .eq .frac i { margin: 0; height: 3px; min-width: 1.2em; }
+    .eq .slotbox {
+      font-size: 1em; height: 1.2em; min-width: 1.45em;
+      padding: 0 0.16em; border-width: 2px; border-radius: 8px;
+    }
+    .qmark { font-size: 32px; color: var(--pink-deep); }
+    .cmp-row { display: flex; align-items: center; gap: 14px; }
+
+    .lshape { display: flex; align-items: flex-start; font-size: var(--l); font-weight: 900; }
+    .ldivs { width: 2.7em; display: flex; flex-direction: column; flex: 0 0 2.7em; }
+    .dcell {
+      height: var(--row); display: grid; place-items: center;
+      border-bottom: 5px solid transparent;
+      font-size: inherit; font-weight: 900; font-variant-numeric: tabular-nums;
+      font-family: "Noto Sans TC", sans-serif;
+    }
+    .lbody {
+      padding: 0 4px 0 6px;
+      background: rgba(255,255,255,0.72);
+    }
+    .nrow {
+      display: grid; height: var(--row);
+      border-left: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-bottom-left-radius: 12px;
+      padding-right: 0.4em;
+      font-size: inherit;
+    }
+    .nrow.ruled { border-left-color: var(--line); border-bottom-color: var(--line); }
+    .ncell {
+      position: relative; display: grid; place-items: center;
+      font-family: "Noto Sans TC", sans-serif; font-variant-numeric: tabular-nums;
+      font-weight: 900; font-size: inherit; line-height: 1;
+    }
+    .ncell .pull {
+      position: absolute; left: 50%; top: calc(50% + 0.34em);
+      width: 0.48em; height: calc(50% - 0.42em);
+      transform: translateX(-50%);
+      transform-origin: top center; animation: pullGrow 0.55s ease;
+      pointer-events: none; z-index: 3; overflow: visible;
+    }
+    .ncell.fall .digit { display: inline-block; animation: fallNum 0.55s ease; }
+    .slotbox {
+      min-width: 1.7em; height: 1.42em; padding: 0 0.2em;
+      border: 3px solid #ffe1ec; border-radius: 12px; background: #fff;
+      display: grid; place-items: center;
+      font-size: inherit; font-weight: 900; font-variant-numeric: tabular-nums;
+      color: var(--ink);
+    }
+    .slotbox.on { border-color: var(--pink); }
+    .slotbox.bad, .slotbox.on.bad { border-color: #e0314b; background: #fff1f3; }
+    .slotbox.sm { min-width: 1.5em; height: 1.3em; }
+
+    .oslot, .chip {
+      width: 3.15em; height: 3.05em; border-radius: 16px; box-sizing: border-box;
+      display: grid; place-items: center; padding: 0; font-size: inherit;
+    }
+    .oslot { border: 3px dashed #ffd0e2; background: #fff; }
+    .oslot.over { border-color: var(--pink); background: #fff5f9; }
+    .pool { display: flex; gap: 0.4em; flex-wrap: wrap; justify-content: center; min-height: 3.05em; }
+    .chip {
+      border: 3px solid #fff; background: #fff;
+      box-shadow: 0 4px 0 #e7eef8; touch-action: none; cursor: grab;
+    }
+    .oslot .chip { width: calc(100% + 6px); height: calc(100% + 6px); margin: -3px; }
+    .chip .frac { font-size: 1em; }
+    .drag-ghost {
+      position: fixed; z-index: 80; pointer-events: none; margin: 0;
+      transform: translate(-50%, -50%); opacity: 0.94;
+    }
+
+    .dock { display: flex; gap: 8px; flex-shrink: 0; align-items: stretch; min-height: 0; }
+    .keypad { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .key-acts { display: flex; gap: 6px; align-items: stretch; }
+    .key-acts .key { min-width: 76px; padding: 8px 10px; }
+    .key {
+      border: 0; border-radius: 14px; background: #fff; color: var(--ink);
+      font-weight: 900; font-size: clamp(18px, 2.6vh, 24px); padding: 8px 0;
+      box-shadow: 0 4px 0 #e4d7ea;
+    }
+    .key.go { background: var(--mint); color: #165f4c; box-shadow: 0 4px 0 var(--mint-deep); }
+    .key.del { background: #fff; color: var(--soft); font-size: 18px; }
+    .key.done {
+      background: var(--lemon); color: var(--ink); box-shadow: 0 4px 0 var(--lemon-deep);
+      font-size: 16px; white-space: nowrap;
+    }
+
+    .dash-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-shrink: 0; margin-bottom: 8px; }
+    .dash-h h1 { font-family: "Fredoka", "Noto Sans TC", sans-serif; font-size: clamp(20px, 3vh, 28px); color: var(--ink); }
+    .dash-h .acts { display: flex; gap: 8px; margin: 0; }
+    .dash { flex: 1; min-height: 0; overflow: hidden; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; flex-shrink: 0; }
+    .stat { border-radius: 16px; padding: 10px; }
+    .stat b { display: block; font-size: 12px; opacity: 0.8; }
+    .stat strong { font-size: clamp(16px, 2.6vh, 24px); display: block; line-height: 1.2; }
+    .stat .miss3 { font-size: 13px; font-weight: 800; line-height: 1.45; }
+    .s1 { background: #d9f8ee; } .s2 { background: #ffe1ea; } .s3 { background: #efe6ff; }
+    .tools { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; gap: 8px; flex-wrap: wrap; }
+    .tools select, .tools button.tiny { border: 2px solid #ffe1ec; border-radius: 12px; padding: 4px 8px; font-weight: 800; background: #fff; }
+    .tool-filters { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .dash-src { font-size: 12px; font-weight: 800; color: var(--soft); }
+    .dash-count { font-size: 12px; font-weight: 800; color: var(--soft); }
+    .records { flex: 1; min-height: 0; overflow: auto; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(16,36,63,0.08); font-size: 12px; }
+    th { background: #e8fff6; position: sticky; top: 0; z-index: 2; white-space: nowrap; }
+    th.col-h { padding-right: 4px; }
+    .col-sort { border: 0; background: transparent; font: inherit; font-weight: 900; cursor: pointer; padding: 0; }
+    th.sorted .col-sort { color: #3cbc9a; }
+    .filter-btn {
+      border: 0; background: #d9f8ee; color: var(--ink); cursor: pointer;
+      border-radius: 8px; width: 22px; height: 22px; margin-left: 4px;
+      font-size: 12px; font-weight: 900; line-height: 1; vertical-align: middle;
+    }
+    .filter-btn.on { background: var(--mint-deep); color: #fff; }
+    .score-cell { font-variant-numeric: tabular-nums; font-weight: 900; text-align: center; }
+    th.score-h, td.rank-cell { text-align: center; font-variant-numeric: tabular-nums; }
+    tr.hi .score-cell { color: #1a8f7c; }
+    tr.lo .score-cell { color: #b42318; }
+    .diag-cell { white-space: pre-line; }
+    .empty { text-align: center; padding: 20px; font-weight: 800; color: var(--soft); }
+    .filter-menu {
+      position: fixed; z-index: 30; width: min(280px, calc(100vw - 16px));
+      background: #fff; border-radius: 18px; padding: 10px;
+      box-shadow: 0 16px 36px rgba(59,42,85,0.24); border: 2px solid #ffe1ec;
+      display: none; flex-direction: column; gap: 8px; max-height: min(420px, 70vh);
+    }
+    .filter-menu.show { display: flex; }
+    .filter-menu .fm-title { font-weight: 900; font-size: 14px; text-align: left; }
+    .filter-menu .fm-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-menu .fm-acts button {
+      border: 0; border-radius: 999px; font-weight: 900; padding: 6px 10px; font-size: 12px;
+      background: #e8fff6; color: var(--ink); cursor: pointer;
+    }
+    .filter-menu input[type="search"] {
+      width: 100%; border: 2px solid #ffe1ec; border-radius: 12px;
+      padding: 6px 8px; font-weight: 800; font-size: 14px;
+    }
+    .filter-menu .opts { overflow: auto; text-align: left; flex: 1; min-height: 80px; }
+    .filter-menu label { display: flex; gap: 8px; align-items: flex-start; padding: 5px 2px; font-weight: 800; font-size: 13px; cursor: pointer; }
+    .filter-menu label input { margin-top: 2px; }
+
+    .report {
+      position: fixed; inset: 0; background: rgba(59, 42, 85, 0.42);
+      display: none; place-items: center; z-index: 25; padding: 16px;
+    }
+    .report.show { display: grid; }
+    .report-card {
+      width: min(520px, 100%); background: #fff; border-radius: 32px;
+      padding: 22px 20px 18px; text-align: center; border: 4px solid #fff;
+      box-shadow: 0 18px 40px rgba(126, 236, 200, 0.28); animation: popIn 0.4s ease; color: var(--ink);
+    }
+    .report-card h2 { font-size: clamp(22px, 3.4vh, 28px); margin: 8px 0 10px; }
+    .report-card p { font-weight: 800; line-height: 1.55; margin: 8px 0; font-size: 16px; }
+    .tip {
+      background: #e8fff6; border-radius: 18px; padding: 12px 14px; margin: 12px 0 16px;
+      font-weight: 800; line-height: 1.6; text-align: left; white-space: pre-wrap;
+    }
+    .modal { position: fixed; inset: 0; background: rgba(59,42,85,0.4); display: none; place-items: center; z-index: 20; padding: 16px; }
+    .modal.show { display: grid; }
+    .modal-card { width: min(360px, 100%); background: #fff; border-radius: 24px; padding: 18px; text-align: center; color: var(--ink); }
+    .modal-card input {
+      width: 100%; border: 3px solid #ffe1ec; border-radius: 14px;
+      padding: 10px; font-size: 20px; font-weight: 800; text-align: center; margin: 10px 0;
+    }
+    .choice-row { display: flex; gap: 8px; }
+    canvas#confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; }
+
+    @media (max-height: 720px) {
+      .stat .miss3 { font-size: 12px; line-height: 1.35; }
+      .mascot { width: 56px; height: 56px; font-size: 26px; }
+      .mascot svg { width: 34px; }
+      .teacher-btn, .login-acts .teacher-btn { width: 52px; height: 52px; min-width: 52px; flex-basis: 52px; font-size: 12px; }
+      .hintbar { font-size: 17px; padding: 6px 10px; }
+      .sheet {
+        --q: clamp(18px, 2.9vh, 22px);
+        --l: clamp(22px, 3.3vh, 26px);
+        --row: clamp(50px, 7.4vh, 62px);
+        --gap: clamp(8px, 1.35vh, 14px);
+      }
+      .key { font-size: 16px; padding: 6px 0; }
+      .key.del, .key.done { font-size: 14px; }
+      .key-acts .key { min-width: 64px; padding: 6px 8px; }
+      .dcell { border-bottom-width: 4px; }
+      .nrow { border-left-width: 4px; border-bottom-width: 4px; }
+    }
+    @media print {
+      html, body, .app, .screen.active { position: static; height: auto; overflow: visible; }
+      .no-print, canvas, .fun-bg, .report, .modal, .filter-menu, .filter-btn { display: none !important; }
+      .records { overflow: visible; }
+      body { background: #fff; }
+    }
+  </style>
+</head>
+<body>
+  <div class="fun-bg" aria-hidden="true">
+    <div class="deco deco-lt"><svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid meet"><path d="M16 16 L16 3 A13 13 0 1 1 3 16 Z" fill="#3d9bff" fill-opacity="0.65"/></svg></div>
+    <div class="deco deco-lbl"><svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid meet"><path d="M16 16 L16 3 A13 13 0 0 1 16 29 Z" fill="#ff4d88" fill-opacity="0.6"/></svg></div>
+    <div class="deco deco-lbr"><svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid meet"><path d="M16 16 L29 16 A13 13 0 0 1 9 27 Z" fill="#f5c400" fill-opacity="0.65"/></svg></div>
+    <div class="deco deco-rt"><svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid meet"><path d="M16 16 L16 3 A13 13 0 1 1 6 26 Z" fill="#1fbf8a" fill-opacity="0.6"/></svg></div>
+    <div class="deco deco-rbl"><svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid meet"><path d="M16 16 L22 5 A13 13 0 0 1 10 27 Z" fill="#9a63f5" fill-opacity="0.65"/></svg></div>
+    <div class="deco deco-rbr"><svg viewBox="0 0 32 32" preserveAspectRatio="xMidYMid meet"><path d="M16 16 L16 3 A13 13 0 0 1 29 16 Z" fill="#ff8a3d" fill-opacity="0.6"/></svg></div>
+  </div>
+  <canvas id="confetti"></canvas>
+  <div class="app">
+    <section id="screen-login" class="screen active">
+      <div class="card login">
+        <div class="mascot" aria-hidden="true">
+          <svg viewBox="0 0 32 32" focusable="false">
+            <defs>
+              <linearGradient id="mascotPie" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#9ee7ff"/>
+                <stop offset="1" stop-color="#3ecf9a"/>
+              </linearGradient>
+            </defs>
+            <circle cx="16" cy="16" r="12" fill="#fff" stroke="#3b2a55" stroke-width="1.4"/>
+            <path d="M16 16 L16 4 A12 12 0 1 1 5 22 Z" fill="url(#mascotPie)" stroke="#3b2a55" stroke-width="1.4" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="title" id="titleWave"></h1>
+        <div class="field">
+          <label for="classId">班別</label>
+          <input id="classId" maxlength="8" placeholder="5A" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="studentId">學號</label>
+          <input id="studentId" maxlength="6" placeholder="01" inputmode="numeric" autocomplete="off" />
+        </div>
+        <button class="candy pink start" id="startBtn">開始任務</button>
+        <div class="login-acts">
+          <button class="candy mint teacher-btn" id="rankBtn">學生<br>排行</button>
+          <button class="candy lilac teacher-btn" id="teacherBtn">老師<br>後台</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-game" class="screen">
+      <div class="topbar">
+        <div class="pill" id="playerPill">5A 01</div>
+        <div class="pill" id="qPill">第 1 題</div>
+        <div class="timer-wrap">
+          <div class="pill timer" id="timer">⏱️ 06:00</div>
+          <span class="time-hit" id="timeHit" aria-hidden="true">−5秒</span>
+        </div>
+        <button class="candy ghost tiny no-print" id="backLoginBtn">主頁</button>
+      </div>
+      <div class="card play">
+        <div class="task-h">
+          <h2 id="taskTitle">任務一：兩個分數</h2>
+          <p id="taskKind">短除</p>
+        </div>
+        <div class="hintbar" id="hintBar">請填除數</div>
+        <div class="board" id="board"><div class="stage" id="stage"></div></div>
+        <div class="dock" id="dock"></div>
+      </div>
+    </section>
+
+    <section id="screen-dash" class="screen">
+      <div class="dash-h">
+        <h1>老師後台</h1>
+        <div class="acts no-print">
+          <button class="candy lemon tiny" id="printBtn">列印</button>
+          <button class="candy sky tiny" id="refreshDashBtn">重新整理</button>
+          <button class="candy ghost tiny" id="dashBackBtn">返回</button>
+        </div>
+      </div>
+      <div class="card dash">
+        <div class="stats" id="analysisCards"></div>
+        <div class="tools">
+          <strong>全班紀錄 <small id="dashSource" class="dash-src"></small></strong>
+          <div class="tool-filters">
+            <select id="classFilter" aria-label="班別"></select>
+            <span class="dash-count" id="dashCount"></span>
+            <button type="button" class="tiny" id="clearFiltersBtn">清除篩選</button>
+          </div>
+        </div>
+        <div class="records" id="studentRecords"></div>
+      </div>
+    </section>
+
+    <section id="screen-rank" class="screen">
+      <div class="dash-h">
+        <h1>學生排行</h1>
+        <div class="acts no-print">
+          <button class="candy sky tiny" id="rankRefreshBtn">重新整理</button>
+          <button class="candy ghost tiny" id="rankBackBtn">返回</button>
+        </div>
+      </div>
+      <div class="card dash">
+        <p class="rank-note">✨ 數學之星 ✨</p>
+        <div class="records" id="rankRecords"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="report" id="reportModal">
+    <div class="report-card">
+      <div class="mascot">🏆</div>
+      <h2>成績診斷卡</h2>
+      <p id="reportScore"></p>
+      <div class="tip" id="reportTip"></div>
+      <button class="candy pink" id="reportBackBtn">完成</button>
+    </div>
+  </div>
+  <div id="dashFilterMenu" class="filter-menu"></div>
+  <div class="modal" id="pinModal">
+    <div class="modal-card">
+      <h3>老師後台</h3>
+      <input id="pinInput" type="password" maxlength="8" inputmode="numeric" autocomplete="off" />
+      <div class="choice-row">
+        <button class="candy ghost" id="pinCancel">取消</button>
+        <button class="candy lilac" id="pinOk">確認</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyGGhtjy7bKzw9M-divK5BZYL0mGcHJwcNoV_xv8VAUalMu_U9ptg8A8wIRQ8cpvQxv/exec";
+      const GAME_ID = "p5ma-ch9";
+      const CHAPTER = "p5ma-ch9";
+      const STORE_KEY = "p5ma-ch9-v1";
+      const TEACHER_PIN = "2246";
+      const GAME_SECS = 360;
+      const PENALTY_SECS = 5;
+      const TITLE = "通分大師：比較分數";
+      const MISS_KEYS = [
+        ["div", "短除除數錯誤"],
+        ["open", "短除未完成"],
+        ["lcm", "最小公倍數錯誤"],
+        ["den", "擴分未用最小公倍數"],
+        ["num", "擴分乘數不一致"],
+        ["cmp", "通分後比較錯誤"],
+        ["dir", "排列方向錯誤"]
+      ];
+      // 淺、中、深。第 1–2 題用淺，第 3–4 題用中，之後用深。同一層隨機，左右次序再隨機。
+      const TWO = [
+        [
+          [1, 2, 3, 4], [2, 3, 5, 6], [7, 8, 3, 4], [3, 4, 5, 8],
+          [5, 8, 1, 2], [2, 3, 4, 9], [3, 5, 7, 10], [7, 10, 1, 2],
+          [3, 4, 5, 6], [5, 6, 1, 4], [7, 12, 1, 4], [5, 6, 7, 12]
+        ],
+        [
+          [3, 7, 5, 14], [2, 5, 7, 15], [5, 8, 9, 16], [5, 6, 7, 9],
+          [4, 9, 5, 6], [8, 9, 5, 6], [3, 4, 7, 10], [7, 20, 3, 10],
+          [2, 7, 5, 21], [5, 8, 7, 12], [3, 8, 5, 6], [7, 8, 5, 6]
+        ],
+        [
+          [4, 15, 3, 10], [5, 6, 7, 10], [7, 10, 11, 15], [5, 12, 7, 18],
+          [4, 9, 7, 12], [5, 9, 7, 12], [5, 8, 7, 10], [7, 8, 11, 20],
+          [5, 14, 8, 21], [8, 21, 5, 6], [7, 16, 5, 12], [9, 25, 7, 10]
+        ]
+      ];
+      const THREE = [
+        [
+          [[1, 2], [2, 3], [5, 6]], [[1, 2], [3, 4], [5, 8]], [[1, 2], [3, 4], [7, 8]],
+          [[3, 8], [1, 2], [3, 4]], [[1, 2], [3, 5], [7, 10]], [[1, 2], [2, 3], [3, 4]],
+          [[2, 3], [3, 4], [5, 6]], [[1, 3], [3, 4], [5, 6]], [[1, 4], [2, 3], [5, 6]],
+          [[1, 2], [5, 6], [7, 12]]
+        ],
+        [
+          [[1, 2], [2, 3], [7, 9]], [[1, 2], [5, 6], [4, 9]], [[1, 2], [3, 4], [7, 10]],
+          [[1, 4], [3, 5], [7, 10]], [[2, 3], [3, 4], [5, 8]], [[1, 3], [3, 4], [5, 8]],
+          [[1, 3], [5, 6], [7, 8]], [[3, 4], [5, 6], [7, 8]], [[1, 2], [5, 8], [7, 12]],
+          [[1, 4], [3, 8], [5, 12]]
+        ],
+        [
+          [[5, 7], [1, 2], [3, 4]], [[1, 2], [2, 3], [7, 10]], [[1, 3], [2, 5], [5, 6]],
+          [[2, 5], [5, 6], [7, 10]], [[2, 3], [3, 4], [5, 9]], [[1, 4], [5, 6], [7, 9]],
+          [[3, 4], [5, 9], [7, 12]], [[2, 9], [1, 3], [5, 12]], [[5, 8], [3, 5], [7, 10]],
+          [[1, 2], [5, 8], [7, 10]]
+        ]
+      ];
+
+      const state = {
+        classId: "", studentId: "",
+        qIndex: 1, remain: GAME_SECS, ended: false, busy: false,
+        done: 0, qTimes: [], qStart: 0, sheetSent: false,
+        miss: blankMiss(), q: null
+      };
+      let audioCtx = null, countId = null, bag2 = [[], [], []], bag3 = [[], [], []], animTimer = 0;
+      let sheetLogsCache = null, dashSeq = 0, dashAllLogs = [], rankSeq = 0;
+      let dashClass = "ALL", dashSort = { col: "student", dir: "asc" };
+      let dashFilters = {}, dashMenuCol = "";
+      const DASH_COLS = [
+        { key: "student", label: "班別學號", numeric: false },
+        { key: "score", label: "答對題數", numeric: true },
+        { key: "avg", label: "平均用時(秒)", numeric: true },
+        { key: "diagnosis", label: "診斷", numeric: false },
+        { key: "time", label: "時間", numeric: false }
+      ];
+      const $ = (id) => document.getElementById(id);
+      const screens = { login: $("screen-login"), game: $("screen-game"), dash: $("screen-dash"), rank: $("screen-rank") };
+
+      function blankMiss() {
+        return { div: 0, open: 0, lcm: 0, den: 0, num: 0, cmp: 0, dir: 0 };
+      }
+      function gcd(a, b) {
+        a = Math.abs(a); b = Math.abs(b);
+        while (b) { const t = a % b; a = b; b = t; }
+        return a || 1;
+      }
+      function lcm(a, b) { return Math.abs(a) / gcd(a, b) * Math.abs(b); }
+      function lcmAll(nums) { return nums.reduce((p, n) => lcm(p, n), 1); }
+      function shares(nums) {
+        for (let i = 0; i < nums.length; i++) {
+          for (let j = i + 1; j < nums.length; j++) {
+            if (gcd(nums[i], nums[j]) > 1) return true;
+          }
+        }
+        return false;
+      }
+      function splitRow(nums, d) {
+        const copies = nums.map((n) => n % d !== 0);
+        const next = nums.map((n, i) => (copies[i] ? n : n / d));
+        return { copies, next };
+      }
+      function workProduct(divs, bottom) {
+        return divs.concat(bottom).reduce((p, n) => p * n, 1);
+      }
+      function showScreen(name) {
+        Object.keys(screens).forEach((key) => screens[key].classList.toggle("active", key === name));
+        if (name !== "game") stopCountdown();
+      }
+      function bounce(el) {
+        if (!el) return;
+        el.classList.remove("bounce");
+        void el.offsetWidth;
+        el.classList.add("bounce");
+      }
+      function shuffle(arr) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const t = a[i]; a[i] = a[j]; a[j] = t;
+        }
+        return a;
+      }
+      function takeTier(bags, tiers, stage) {
+        const tier = Math.min(stage, tiers.length - 1);
+        const bag = bags[tier];
+        if (!bag.length) tiers[tier].forEach((_, i) => bag.push(i));
+        const i = Math.floor(Math.random() * bag.length);
+        return tiers[tier][bag.splice(i, 1)[0]];
+      }
+      function fracHTML(n, d) {
+        return `<span class="frac"><b>${n}</b><i></i><b>${d}</b></span>`;
+      }
+      function box(text, on, bad) {
+        return `<span class="slotbox${on ? " on" : ""}${bad ? " bad" : ""}">${text === "" ? "" : text}</span>`;
+      }
+      function setHint(text) { $("hintBar").textContent = text; }
+      function phaseName(phase) {
+        if (phase === "div") return "短除";
+        if (phase === "lcm") return "最小公倍數";
+        if (phase === "exp") return "擴分";
+        return "比較";
+      }
+      function settleDiv(q) {
+        const bottom = q.rows[q.rows.length - 1];
+        if (shares(bottom)) return false;
+        q.lcm = workProduct(q.divs, bottom);
+        q.phase = "lcm";
+        q.entry = "";
+        return true;
+      }
+
+      $("titleWave").innerHTML = [...TITLE].map((ch, i) =>
+        `<span style="display:inline-block;animation:floaty 2.4s ${i * 0.08}s ease-in-out infinite">${ch}</span>`
+      ).join("");
+
+      function loadStore() {
+        try {
+          const raw = localStorage.getItem(STORE_KEY);
+          if (!raw) return { students: {}, logs: [] };
+          const data = JSON.parse(raw);
+          return { students: data.students || {}, logs: Array.isArray(data.logs) ? data.logs : [] };
+        } catch (e) { return { students: {}, logs: [] }; }
+      }
+      function saveStore(data) { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+      function normalizeId(id) {
+        const raw = String(id || "").trim();
+        return /^\d+$/.test(raw) ? raw.padStart(2, "0") : raw;
+      }
+      function studentKey(c, s) { return `${c}__${normalizeId(s)}`; }
+      function nowText() {
+        const d = new Date();
+        const p = (n) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+      }
+      function ensureStudent() {
+        const db = loadStore();
+        const key = studentKey(state.classId, state.studentId);
+        if (!db.students[key]) {
+          db.students[key] = { classId: state.classId, studentId: normalizeId(state.studentId) };
+          saveStore(db);
+        }
+        return key;
+      }
+      function realAttempt() {
+        return state.done > 0 || MISS_KEYS.some(([k]) => state.miss[k] > 0);
+      }
+      function diagnose() {
+        const items = MISS_KEYS.filter(([k]) => state.miss[k] > 0).map(([k, label]) => `${label}（${state.miss[k]}次）`);
+        if (!items.length) return { short: "零失誤", sheet: "零失誤", tip: "零失誤\n🌟 做得好啊" };
+        const bullets = items.map((s) => "• " + s).join("\n");
+        return { short: bullets, sheet: bullets, tip: bullets + "\n💪 再接再厲吧" };
+      }
+      function sheetConfigured() {
+        return /^https:\/\/script\.google\.com\/macros\/s\/(?!YOUR_SCRIPT_ID\b)[^/]+\/exec\/?$/.test(GOOGLE_SHEET_URL);
+      }
+      function sendToGoogleSheet(d) {
+        if (state.sheetSent || !sheetConfigured() || !realAttempt()) return;
+        state.sheetSent = true;
+        const avg = state.done ? Math.round(state.qTimes.reduce((x, y) => x + y, 0) / state.done) : 0;
+        const payload = {
+          game: GAME_ID, chapter: CHAPTER,
+          student: `${state.classId} (${normalizeId(state.studentId)})`,
+          score: state.done, avgTime: `${avg}秒`, diagnostic: d.sheet
+        };
+        try {
+          fetch(GOOGLE_SHEET_URL, {
+            method: "POST", mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          }).catch(function () {});
+        } catch (err) {}
+      }
+      function parseSheetStudent(s) {
+        const m = String(s || "").match(/^(.+?)\s*\(([^)]+)\)/);
+        if (m) return { classId: m[1].trim(), studentId: normalizeId(m[2].trim()) };
+        return { classId: "", studentId: String(s || "").trim() };
+      }
+      function parseAvgSec(s) {
+        const m = String(s || "").match(/(\d+)/);
+        return m ? Number(m[1]) : 0;
+      }
+      function rowsToLogs(rows) {
+        return (rows || []).map((r) => {
+          const who = parseSheetStudent(r.student);
+          return {
+            classId: who.classId, studentId: who.studentId,
+            done: Number(r.score) || 0, avgSec: parseAvgSec(r.avgTime),
+            diagnosis: String(r.diagnostic || ""), time: r.time || ""
+          };
+        }).filter((e) => e.studentId || e.classId);
+      }
+      function jsonpSheet(url) {
+        return new Promise((resolve, reject) => {
+          const cb = "p5ch9Dash" + Date.now();
+          const s = document.createElement("script");
+          const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 15000);
+          function cleanup() {
+            clearTimeout(timer);
+            try { delete window[cb]; } catch (err) { window[cb] = undefined; }
+            if (s.parentNode) s.parentNode.removeChild(s);
+          }
+          window[cb] = function (data) { cleanup(); resolve(data); };
+          s.onerror = function () { cleanup(); reject(new Error("script")); };
+          s.src = url + (url.indexOf("?") >= 0 ? "&" : "?") + "callback=" + cb;
+          document.body.appendChild(s);
+        });
+      }
+      async function loadSheetLogs(force) {
+        if (sheetLogsCache && !force) return sheetLogsCache;
+        if (!sheetConfigured()) throw new Error("no-url");
+        const url = GOOGLE_SHEET_URL + "?game=" + encodeURIComponent(GAME_ID);
+        let data = null;
+        try {
+          const res = await fetch(url, { method: "GET" });
+          if (!res.ok) throw new Error("http");
+          data = await res.json();
+        } catch (err) { data = await jsonpSheet(url); }
+        if (!data || !data.ok) throw new Error("bad");
+        sheetLogsCache = rowsToLogs(data.rows);
+        return sheetLogsCache;
+      }
+      function saveSession() {
+        const d = diagnose();
+        if (!realAttempt()) return d;
+        const db = loadStore();
+        ensureStudent();
+        const avg = state.done ? Math.round(state.qTimes.reduce((a, b) => a + b, 0) / state.done) : 0;
+        db.logs.push({
+          classId: state.classId, studentId: normalizeId(state.studentId),
+          done: state.done, avgSec: avg, diagnosis: d.short, time: nowText()
+        });
+        saveStore(db);
+        return d;
+      }
+      function unlockAudio() {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) audioCtx = new AC();
+        }
+        if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+      }
+      function tone(freq, dur, type, gain) {
+        if (!audioCtx) return;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = type || "sine"; o.frequency.value = freq; g.gain.value = gain || 0.05;
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start();
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+        o.stop(audioCtx.currentTime + dur);
+      }
+      function sfx(kind) {
+        unlockAudio();
+        if (kind === "ok") {
+          tone(523, 0.1, "triangle");
+          setTimeout(() => tone(659, 0.1, "triangle"), 80);
+          setTimeout(() => tone(784, 0.16, "triangle"), 160);
+        } else if (kind === "bad") tone(180, 0.2, "sawtooth", 0.04);
+        else if (kind === "win") [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, 0.14, "triangle"), i * 100));
+      }
+      function renderTimer() {
+        const s = Math.max(0, state.remain);
+        $("timer").textContent = `⏱️ ${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+        $("timer").classList.toggle("low", s <= 15);
+      }
+      function applyPenalty() {
+        if (state.ended) return;
+        state.remain = Math.max(0, state.remain - PENALTY_SECS);
+        renderTimer();
+        const timer = $("timer"), hit = $("timeHit");
+        if (timer) {
+          timer.classList.remove("hit");
+          void timer.offsetWidth;
+          timer.classList.add("hit");
+          setTimeout(() => timer.classList.remove("hit"), 420);
+        }
+        if (hit) {
+          hit.classList.remove("show");
+          void hit.offsetWidth;
+          hit.classList.add("show");
+          setTimeout(() => hit.classList.remove("show"), 720);
+        }
+        if (state.remain <= 0) endSession();
+      }
+      function stopCountdown() { clearInterval(countId); countId = null; }
+      function startCountdown() {
+        stopCountdown();
+        state.remain = GAME_SECS; state.ended = false; renderTimer();
+        countId = setInterval(() => {
+          if (state.ended) return;
+          state.remain -= 1; renderTimer();
+          if (state.remain <= 0) endSession();
+        }, 1000);
+      }
+      function endSession() {
+        if (state.ended) return;
+        state.ended = true; state.remain = 0; renderTimer(); stopCountdown();
+        const d = saveSession();
+        sendToGoogleSheet(d);
+        $("reportScore").textContent = `6 分鐘內答對 ${state.done} 題`;
+        $("reportTip").textContent = d.tip;
+        $("reportModal").classList.add("show");
+        if (realAttempt()) { burstConfetti(160); sfx("win"); }
+      }
+
+      function renderLadder(q) {
+        if (!q.divs.length && q.phase !== "div") return "";
+        const cols = q.rows[0].length;
+        const anim = q.anim;
+        const divCells = q.rows.map((_, r) => {
+          if (r < q.divs.length) return `<div class="dcell"><b>${q.divs[r]}</b></div>`;
+          if (r === q.rows.length - 1 && q.phase === "div") return `<div class="dcell">${box(q.entry, true)}</div>`;
+          return `<div class="dcell"></div>`;
+        }).join("");
+        const numRows = q.rows.map((row, r) => {
+          const cells = row.map((n, c) => {
+            const fromCopy = anim && anim.from === r - 1 && anim.copies[c];
+            const arrow = anim && anim.from === r && anim.copies[c]
+              ? `<svg class="pull" viewBox="0 0 20 48" aria-hidden="true"><line x1="10" y1="2" x2="10" y2="32" stroke="#2c2144" stroke-width="3" stroke-linecap="round"/><polyline points="3,26 10,42 17,26" fill="none" stroke="#2c2144" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg>`
+              : "";
+            return `<div class="ncell${fromCopy ? " fall" : ""}"><span class="digit">${n}</span>${arrow}</div>`;
+          }).join("");
+          const ruled = q.phase === "div" || r < q.rows.length - 1;
+          return `<div class="nrow${ruled ? " ruled" : ""}" style="grid-template-columns:repeat(${cols},2.4em)">${cells}</div>`;
+        }).join("");
+        return `<div class="lshape"><div class="ldivs">${divCells}</div><div class="lbody">${numRows}</div></div>`;
+      }
+      function joinNames(parts) {
+        if (parts.length <= 1) return parts.join("");
+        if (parts.length === 2) return parts[0] + "和" + parts[1];
+        return parts.slice(0, -1).join("、") + "和" + parts[parts.length - 1];
+      }
+      function titleHTML(fracs) {
+        const bits = fracs.map((f) => fracHTML(f.n, f.d));
+        return `<span>比較</span>${joinNames(bits)}<span>的大小</span>`;
+      }
+      function factorExpr(q) {
+        return q.divs.concat(q.rows[q.rows.length - 1]).join("×");
+      }
+      function chipHTML(i, f) {
+        return `<button type="button" class="chip" data-chip="${i}">${fracHTML(f.n, f.d)}</button>`;
+      }
+      function renderNotes(q) {
+        if (q.phase === "div") return "";
+        const phrase = `${joinNames(q.fracs.map((f) => String(f.d)))}的最小公倍數是`;
+        const lcmBit = q.phase === "lcm"
+          ? box(q.entry, true)
+          : `<b class="lcm-num">${q.lcm}</b>`;
+        let exps = "";
+        if (q.phase === "exp" || q.phase === "cmp") {
+          exps = q.fracs.map((f, i) => {
+            const num = q.phase === "cmp" ? f.n * (q.lcm / f.d) : q.exp[i].n;
+            const numBit = q.phase === "cmp" ? `<b>${num}</b>` : box(num, q.focus === i, !!(q.badNums && q.badNums[i]));
+            return `<div class="eq">${fracHTML(f.n, f.d)}<span>＝</span><span class="frac">${numBit}<i></i><b>${q.lcm}</b></span></div>`;
+          }).join("");
+        }
+        return `<div class="lcm-line"><span>${phrase}</span>${lcmBit}</div>${exps}`;
+      }
+      function renderTherefore(q) {
+        if (q.phase !== "cmp") return "";
+        const placed = new Set(q.slots.filter((s) => s != null));
+        const slots = q.slots.map((id, i) => {
+          const inner = id == null ? "" : chipHTML(id, q.fracs[id]);
+          const sign = i < q.slots.length - 1 ? `<span class="sign">${q.sign}</span>` : "";
+          return `<div class="oslot" data-slot="${i}">${inner}</div>${sign}`;
+        }).join("");
+        const pool = q.fracs.map((f, i) => placed.has(i) ? "" : chipHTML(i, f)).join("");
+        return `<div class="therefore"><div class="there-row"><span class="therefore-mark">∴</span>${slots}</div><div class="pool">${pool}</div></div>`;
+      }
+      function renderAll() {
+        const q = state.q;
+        if (!q) return;
+        $("taskTitle").textContent = q.fracs.length === 2 ? "任務一：兩個分數" : "任務二：三個分數";
+        $("taskKind").textContent = phaseName(q.phase);
+        $("qPill").textContent = `第 ${state.qIndex} 題`;
+        $("playerPill").textContent = `${state.classId} ${normalizeId(state.studentId)}`;
+        $("stage").innerHTML = `<div class="sheet"><div class="stack"><div class="cmp-title">${titleHTML(q.fracs)}</div><div class="note-col">${renderNotes(q)}${renderTherefore(q)}</div></div><div class="ladder-col">${renderLadder(q)}</div></div>`;
+        renderDock(q);
+        fitBoard();
+      }
+      function fitBoard() {
+        const stack = document.querySelector(".stack");
+        if (!stack) return;
+        const blocks = [...stack.querySelectorAll(".cmp-title, .lcm-line, .eq, .therefore")];
+        const gaps = blocks.length - 1;
+        if (gaps <= 0) { stack.style.gap = "16px"; return; }
+        const minGap = 12;
+        stack.style.gap = minGap + "px";
+        const contentH = blocks.reduce((sum, el) => sum + el.getBoundingClientRect().height, 0);
+        const raw = (stack.clientHeight - contentH) / gaps;
+        const cap = blocks.length >= 5 ? 40 : 28;
+        stack.style.gap = Math.round(Math.max(minGap, Math.min(cap, raw))) + "px";
+      }
+      function renderDock(q) {
+        if (q.phase === "cmp") { $("dock").innerHTML = ""; return; }
+        const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+        $("dock").innerHTML = `<div class="keypad">${keys.map((k) => `<button type="button" class="key" data-key="${k}">${k}</button>`).join("")}</div><div class="key-acts"><button type="button" class="key del" data-key="del">刪除</button><button type="button" class="key go" data-key="ok">確定</button></div>`;
+      }
+
+      function freshQuestion() {
+        const stage = Math.floor((state.qIndex - 1) / 2);
+        const task = state.qIndex % 2 === 1 ? 1 : 2;
+        let fracs;
+        if (task === 1) {
+          const t = takeTier(bag2, TWO, stage);
+          const pair = shuffle([[t[0], t[1]], [t[2], t[3]]]);
+          fracs = pair.map(([n, d]) => ({ n, d }));
+        } else {
+          const raw = shuffle(takeTier(bag3, THREE, stage));
+          fracs = raw.map(([n, d]) => ({ n, d }));
+        }
+        state.q = {
+          fracs,
+          sign: Math.random() < 0.5 ? "<" : ">",
+          rows: [fracs.map((f) => f.d)],
+          divs: [],
+          phase: "div",
+          entry: "",
+          focus: 0,
+          exp: fracs.map(() => ({ n: "" })),
+          slots: fracs.map(() => null),
+          lcmTries: 0,
+          expTries: 0,
+          anim: null,
+          lcm: 0
+        };
+        state.qStart = Date.now();
+        setHint(settleDiv(state.q) ? "請計算最小公倍數" : "請填除數");
+        renderAll();
+      }
+      function succeed() {
+        if (state.ended) return;
+        const sec = Math.max(1, Math.round((Date.now() - state.qStart) / 1000));
+        state.qTimes.push(sec);
+        state.done += 1;
+        state.qIndex += 1;
+        sfx("ok");
+        freshQuestion();
+      }
+      function shakeEl(el) {
+        if (!el) return;
+        el.classList.remove("shake");
+        void el.offsetWidth;
+        el.classList.add("shake");
+        setTimeout(() => el.classList.remove("shake"), 420);
+      }
+      function miss(key, msg) {
+        if (state.ended || state.busy) return;
+        state.miss[key] += 1;
+        setHint(msg);
+        sfx("bad");
+        const bads = document.querySelectorAll(".slotbox.bad");
+        if (bads.length) bads.forEach(shakeEl);
+        else shakeEl(document.querySelector(".slotbox.on") || document.querySelector(".lshape"));
+        applyPenalty();
+      }
+      function commitDivisor() {
+        const q = state.q;
+        if (!q || q.phase !== "div" || state.busy || state.ended) return;
+        if (!q.entry) { setHint("請填除數"); return; }
+        const d = Number(q.entry);
+        const cur = q.rows[q.rows.length - 1];
+        const step = splitRow(cur, d);
+        const hit = step.copies.filter((c) => !c).length;
+        if (!(d >= 2) || hit < 2) {
+          q.entry = "";
+          renderAll();
+          miss("div", q.fracs.length === 3 ? "除數要整除其中兩個數" : "除數要整除這兩個數");
+          return;
+        }
+        q.divs.push(d);
+        q.rows.push(step.next);
+        q.anim = { from: q.rows.length - 2, copies: step.copies };
+        q.entry = "";
+        state.busy = true;
+        setHint(settleDiv(q) ? "請計算最小公倍數" : "請填除數");
+        renderAll();
+        clearTimeout(animTimer);
+        animTimer = setTimeout(() => {
+          const go = state.q && state.q.pendingOk;
+          if (state.q) {
+            state.q.anim = null;
+            state.q.pendingOk = false;
+          }
+          state.busy = false;
+          renderAll();
+          if (go) onKey("ok");
+        }, 560);
+      }
+      function finishDiv() {
+        const q = state.q;
+        if (!q || q.phase !== "div" || state.busy || state.ended) return;
+        if (q.entry) { setHint("請先按確定"); return; }
+        const bottom = q.rows[q.rows.length - 1];
+        if (shares(bottom)) { miss("open", "短除未完成"); return; }
+        q.lcm = workProduct(q.divs, bottom);
+        q.phase = "lcm";
+        q.entry = "";
+        setHint("請計算最小公倍數");
+        renderAll();
+      }
+      function commitLcm() {
+        const q = state.q;
+        if (!q.entry) { setHint("請填最小公倍數"); return; }
+        if (Number(q.entry) !== q.lcm) {
+          q.lcmTries += 1;
+          const msg = q.lcmTries >= 2 ? "請再計算 " + factorExpr(q) : "請再計算";
+          q.entry = "";
+          renderAll();
+          miss("lcm", msg);
+          return;
+        }
+        q.phase = "exp";
+        q.focus = 0;
+        setHint("請填分子");
+        renderAll();
+      }
+      function commitExp() {
+        const q = state.q;
+        if (q.exp.some((e) => e.n === "")) { setHint("請填分子"); return; }
+        const wrong = [];
+        q.badNums = q.fracs.map((f, i) => {
+          const mul = q.lcm / f.d;
+          const bad = Number(q.exp[i].n) !== f.n * mul;
+          if (bad) wrong.push(`${f.n}×${mul}`);
+          return bad;
+        });
+        if (wrong.length) {
+          q.expTries += 1;
+          const first = q.badNums.findIndex(Boolean);
+          if (first >= 0) q.focus = first;
+          const msg = q.expTries >= 2 ? "請再計算 " + wrong.join("、") : "請再計算";
+          renderAll();
+          miss("num", msg);
+          return;
+        }
+        q.badNums = null;
+        q.phase = "cmp";
+        q.slots = q.fracs.map(() => null);
+        if (!q.sign) q.sign = "<";
+        setHint("請拖入框");
+        renderAll();
+      }
+      function expectedOrder(q) {
+        const desc = q.sign === ">";
+        return q.fracs.map((f, i) => ({ i, v: f.n / f.d }))
+          .sort((a, b) => desc ? b.v - a.v : a.v - b.v)
+          .map((x) => x.i);
+      }
+      function sameList(a, b) { return a.length === b.length && a.every((n, i) => n === b[i]); }
+      function gradeOrder(got) {
+        const q = state.q;
+        const expect = expectedOrder(q);
+        if (sameList(got, expect)) { succeed(); return; }
+        q.slots = q.fracs.map(() => null);
+        renderAll();
+        if (q.fracs.length > 2 && sameList(got, expect.slice().reverse())) miss("dir", "請再比較");
+        else miss("cmp", "請再比較");
+      }
+      function onKey(k) {
+        const q = state.q;
+        if (!q || state.ended) return;
+        if (state.busy) {
+          if (q.phase !== "div" && q.phase !== "lcm") return;
+          if (k === "ok") q.pendingOk = true;
+          else if (k === "del") q.entry = q.entry.slice(0, -1);
+          else if (k >= "0" && k <= "9" && q.entry.length < 4) q.entry += k;
+          renderAll();
+          return;
+        }
+        if (q.phase !== "div" && q.phase !== "lcm" && q.phase !== "exp") return;
+        if (q.phase === "exp") {
+          let cur = q.exp[q.focus].n;
+          if (k === "del") cur = cur.slice(0, -1);
+          else if (k === "ok") { commitExp(); return; }
+          else if (cur.length < 4) cur += k;
+          if (k !== "ok" && q.badNums) q.badNums[q.focus] = false;
+          q.exp[q.focus].n = cur;
+          if (k !== "ok" && k !== "del" && cur.length) {
+            const expect = String(q.fracs[q.focus].n * (q.lcm / q.fracs[q.focus].d));
+            if (cur.length >= expect.length) q.focus = Math.min(q.fracs.length - 1, q.focus + 1);
+          }
+          renderAll();
+          return;
+        }
+        if (k === "del") q.entry = q.entry.slice(0, -1);
+        else if (k === "ok") { if (q.phase === "div") commitDivisor(); else commitLcm(); return; }
+        else if (q.entry.length < 4) q.entry += k;
+        renderAll();
+      }
+
+      function startGame() {
+        const classId = $("classId").value.trim().toUpperCase();
+        const studentId = $("studentId").value.trim();
+        if (!classId || !studentId) { bounce($("startBtn")); return; }
+        unlockAudio();
+        state.classId = classId; state.studentId = studentId;
+        state.qIndex = 1; state.done = 0; state.qTimes = [];
+        state.miss = blankMiss();
+        state.ended = false; state.busy = false; state.sheetSent = false;
+        bag2 = [[], [], []]; bag3 = [[], [], []];
+        $("reportModal").classList.remove("show");
+        ensureStudent();
+        showScreen("game");
+        startCountdown();
+        freshQuestion();
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"'`]/g, (c) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;", "`": "&#96;"
+        }[c]));
+      }
+      function cmpStudent(a, b) {
+        if (a.classId !== b.classId) return String(a.classId).localeCompare(String(b.classId), "zh-Hant");
+        const na = parseInt(a.studentId, 10), nb = parseInt(b.studentId, 10);
+        if (!Number.isNaN(na) && !Number.isNaN(nb) && na !== nb) return na - nb;
+        return String(a.studentId).localeCompare(String(b.studentId), "zh-Hant", { numeric: true });
+      }
+      function timeDay(t) {
+        const s = String(t || "");
+        const m = s.match(/^\d{4}\/\d{2}\/\d{2}/);
+        return m ? m[0] : (s || "（空白）");
+      }
+      function colValue(key, e) {
+        if (key === "student") return `${e.classId} ${e.studentId}`.trim() || "（空白）";
+        if (key === "score") return String(e.done);
+        if (key === "avg") return e.avgSec ? String(e.avgSec) : "—";
+        if (key === "diagnosis") return e.diagnosis || "（空白）";
+        return timeDay(e.time);
+      }
+      function classLogs() {
+        if (!dashClass || dashClass === "ALL") return dashAllLogs;
+        return dashAllLogs.filter((e) => e.classId === dashClass);
+      }
+      function uniqueValues(key) {
+        const set = new Set();
+        classLogs().forEach((e) => set.add(colValue(key, e)));
+        const arr = [...set];
+        const spec = DASH_COLS.find((c) => c.key === key);
+        arr.sort((a, b) => {
+          if (spec && spec.numeric) {
+            const na = Number(a), nb = Number(b);
+            const fa = Number.isFinite(na), fb = Number.isFinite(nb);
+            if (fa && fb) return na - nb;
+            if (fa) return -1;
+            if (fb) return 1;
+          }
+          return String(a).localeCompare(String(b), "zh-Hant", { numeric: true });
+        });
+        return arr;
+      }
+      function filterActive(key) {
+        const sel = dashFilters[key];
+        return !!(sel && sel.size < uniqueValues(key).length);
+      }
+      function anyFilterOn() { return DASH_COLS.some((c) => filterActive(c.key)); }
+      function passesFilters(e) {
+        return DASH_COLS.every((col) => {
+          const sel = dashFilters[col.key];
+          if (!sel) return true;
+          return sel.has(colValue(col.key, e));
+        });
+      }
+      function sortLogs(logs) {
+        const col = dashSort.col;
+        const m = dashSort.dir === "asc" ? 1 : -1;
+        return logs.slice().sort((a, b) => {
+          let c = 0;
+          if (col === "score") c = a.done - b.done;
+          else if (col === "avg") c = (a.avgSec || 0) - (b.avgSec || 0);
+          else if (col === "student") c = cmpStudent(a, b);
+          else if (col === "time") c = String(a.time || "").localeCompare(String(b.time || ""));
+          else if (col === "diagnosis") c = String(a.diagnosis || "").localeCompare(String(b.diagnosis || ""), "zh-Hant");
+          return (c * m) || cmpStudent(a, b);
+        });
+      }
+      function sortMark(key) {
+        if (dashSort.col !== key) return "";
+        return dashSort.dir === "asc" ? " ▲" : " ▼";
+      }
+      function closeFilterMenu() {
+        dashMenuCol = "";
+        const menu = $("dashFilterMenu");
+        if (menu) menu.classList.remove("show");
+      }
+      function errorItems(e) {
+        const text = String(e.diagnosis || "");
+        const items = [];
+        const re = /([^•\n；]+?)（(\d+)次）/g;
+        let m;
+        while ((m = re.exec(text))) {
+          let label = m[1].replace(/^[\s•]+/, "").trim();
+          if (!label || label === "零失誤") continue;
+          const head = label.split("：")[0].trim();
+          if (head) label = head;
+          const n = Number(m[2]) || 0;
+          if (n) items.push([label, n]);
+        }
+        return items;
+      }
+      function studentKeyOf(e) { return `${e.classId}__${e.studentId}`; }
+      function errorTotal(e) { return errorItems(e).reduce((n, it) => n + (it[1] || 0), 0); }
+      function isRealAttempt(e) { return (e.done || 0) > 0 || errorTotal(e) > 0; }
+      function latestReal(logs) {
+        const by = new Map();
+        (logs || []).forEach((e, i) => {
+          if (!isRealAttempt(e)) return;
+          const key = studentKeyOf(e);
+          const prev = by.get(key);
+          const stamp = String(e.time || "");
+          if (!prev || stamp > prev.stamp || (stamp === prev.stamp && i >= prev.i)) by.set(key, { e, stamp, i });
+        });
+        return [...by.values()].map((x) => x.e);
+      }
+      function formatAvg(n) { return String(Math.round(n * 10) / 10); }
+      function bestScore(logs) {
+        const by = new Map();
+        (logs || []).forEach((e) => {
+          if (!isRealAttempt(e)) return;
+          const key = studentKeyOf(e);
+          const prev = by.get(key);
+          if (!prev || (e.done || 0) > (prev.done || 0)) by.set(key, e);
+        });
+        return [...by.values()];
+      }
+      function topMisses(logs) {
+        const counts = new Map();
+        (logs || []).forEach((e) => {
+          errorItems(e).forEach(([label, n]) => {
+            if (!label || !n || label === "零失誤") return;
+            counts.set(label, (counts.get(label) || 0) + n);
+          });
+        });
+        return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "zh")).slice(0, 3);
+      }
+      function topMissHtml(logs) {
+        const top = topMisses(logs);
+        if (!top.length) return "零失誤";
+        return top.map(([label, n]) => `• ${escapeHtml(label)}（${n}次）`).join("<br>");
+      }
+      function dashCardsHtml(logs) {
+        const scored = bestScore(logs);
+        const recent = latestReal(logs);
+        const doneText = scored.length ? formatAvg(scored.reduce((n, e) => n + (e.done || 0), 0) / scored.length) : "—";
+        const errText = recent.length ? formatAvg(recent.reduce((n, e) => n + errorTotal(e), 0) / recent.length) : "—";
+        const missText = recent.length ? topMissHtml(recent) : "—";
+        return `
+          <div class="stat s1"><b>平均 6 分鐘完成題數</b><strong>${doneText}</strong></div>
+          <div class="stat s2"><b>平均錯處次數</b><strong>${errText}</strong></div>
+          <div class="stat s3 errs"><b>三大主要錯處</b><div class="miss3">${missText}</div></div>`;
+      }
+      function paintDash() {
+        DASH_COLS.forEach((col) => {
+          const sel = dashFilters[col.key];
+          if (!sel) return;
+          const all = new Set(uniqueValues(col.key));
+          const next = new Set([...sel].filter((v) => all.has(v)));
+          dashFilters[col.key] = next.size === all.size ? null : next;
+        });
+        const sourceEl = $("dashSource");
+        const base = classLogs();
+        const logs = base.filter(passesFilters);
+        const classes = [...new Set(dashAllLogs.map((s) => s.classId).filter(Boolean))].sort();
+        $("classFilter").innerHTML = `<option value="ALL">全部班別</option>` +
+          classes.map((c) => `<option value="${escapeHtml(c)}" ${c === dashClass ? "selected" : ""}>${escapeHtml(c)}</option>`).join("");
+        $("analysisCards").innerHTML = dashCardsHtml(logs);
+        if ($("dashCount")) $("dashCount").textContent = dashAllLogs.length ? `顯示 ${logs.length} / ${base.length} 筆` : "";
+        if ($("clearFiltersBtn")) $("clearFiltersBtn").style.visibility = anyFilterOn() ? "visible" : "hidden";
+        if (!dashAllLogs.length) {
+          $("studentRecords").innerHTML = `<div class="empty">${sourceEl && sourceEl.textContent.indexOf("未能") >= 0 ? "未能連線 Google 試算表" : "未有紀錄"}</div>`;
+          return;
+        }
+        const ranked = sortLogs(logs);
+        const scores = ranked.map((e) => e.done || 0).slice().sort((a, b) => a - b);
+        const hiCut = scores.length ? scores[Math.max(0, scores.length - Math.ceil(scores.length * 0.2))] || 0 : 0;
+        const loCut = scores.length ? scores[Math.min(scores.length - 1, Math.floor(scores.length * 0.2))] || 0 : 0;
+        const showRank = dashSort.col === "score";
+        const head = (key, extra) => {
+          const spec = DASH_COLS.find((c) => c.key === key);
+          const on = filterActive(key);
+          const sorted = dashSort.col === key ? " sorted" : "";
+          return `<th class="col-h${extra || ""}${sorted}" data-col="${key}">
+            <button type="button" class="col-sort" data-sort="${key}">${escapeHtml(spec.label)}${sortMark(key)}</button>
+            <button type="button" class="filter-btn${on ? " on" : ""}" data-filter="${key}" aria-label="篩選${escapeHtml(spec.label)}">▼</button>
+          </th>`;
+        };
+        const body = ranked.length ? ranked.map((e, i) => {
+          const rank = dashSort.dir === "asc" ? ranked.length - i : i + 1;
+          const hi = e.done >= hiCut && e.done > 0;
+          const lo = e.done <= loCut;
+          return `<tr class="${hi ? "hi" : lo ? "lo" : ""}">
+            ${showRank ? `<td class="rank-cell">${rank}</td>` : ""}
+            <td>${escapeHtml(e.classId)} ${escapeHtml(e.studentId)}</td>
+            <td class="score-cell">${e.done}</td>
+            <td>${e.avgSec || "—"}</td>
+            <td class="diag-cell">${escapeHtml(e.diagnosis)}</td>
+            <td>${escapeHtml(e.time)}</td>
+          </tr>`;
+        }).join("") : `<tr><td colspan="${showRank ? 6 : 5}" class="empty">此篩選沒有紀錄，可再按 ▼ 更改篩選</td></tr>`;
+        $("studentRecords").innerHTML = `<table>
+          <thead><tr>
+            ${showRank ? `<th class="score-h">名次</th>` : ""}
+            ${head("student")}${head("score", " score-h")}${head("avg")}${head("diagnosis")}${head("time")}
+          </tr></thead><tbody>${body}</tbody></table>`;
+      }
+      function placeFilterMenu(anchor) {
+        const menu = $("dashFilterMenu");
+        const r = anchor.getBoundingClientRect();
+        menu.classList.add("show");
+        const w = menu.offsetWidth || 260;
+        const h = menu.offsetHeight || 280;
+        let left = Math.min(r.left, window.innerWidth - w - 8);
+        let top = r.bottom + 4;
+        if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 4);
+        if (left < 8) left = 8;
+        menu.style.left = left + "px";
+        menu.style.top = top + "px";
+      }
+      function renderFilterMenu(key, q) {
+        const spec = DASH_COLS.find((c) => c.key === key);
+        if (!spec) return;
+        const values = uniqueValues(key);
+        const sel = dashFilters[key];
+        const query = String(q || "").trim();
+        const shown = query ? values.filter((v) => String(v).indexOf(query) !== -1) : values;
+        const allOn = !sel;
+        const sortDesc = key === "time" ? "新 → 舊" : (spec.numeric ? "由高到低" : "由 Z 到 A");
+        const sortAsc = key === "time" ? "舊 → 新" : (spec.numeric ? "由低到高" : "由 A 到 Z");
+        $("dashFilterMenu").innerHTML = `
+          <div class="fm-title">篩選：${escapeHtml(spec.label)}</div>
+          <div class="fm-acts">
+            <button type="button" data-fm="sort-desc">${sortDesc}</button>
+            <button type="button" data-fm="sort-asc">${sortAsc}</button>
+          </div>
+          <input type="search" id="fmSearch" placeholder="搜尋" value="${escapeHtml(query)}" />
+          <div class="fm-acts">
+            <button type="button" data-fm="all">全選</button>
+            <button type="button" data-fm="none">全不選</button>
+            <button type="button" data-fm="clear">清除此欄</button>
+          </div>
+          <div class="opts">
+            ${shown.map((v) => {
+              const on = allOn || sel.has(v);
+              const idx = values.indexOf(v);
+              return `<label><input type="checkbox" data-idx="${idx}" ${on ? "checked" : ""} />${escapeHtml(v)}</label>`;
+            }).join("") || `<div class="empty">沒有項目</div>`}
+          </div>`;
+        const search = $("fmSearch");
+        if (search) {
+          search.focus();
+          const n = search.value.length;
+          try { search.setSelectionRange(n, n); } catch (err) {}
+        }
+      }
+      function openFilterMenu(key, anchor) {
+        dashMenuCol = key;
+        renderFilterMenu(key, "");
+        placeFilterMenu(anchor);
+      }
+      function setColFilter(key, nextSet) {
+        const all = uniqueValues(key);
+        if (!nextSet || nextSet.size === all.length) dashFilters[key] = null;
+        else dashFilters[key] = nextSet;
+        paintDash();
+        if (dashMenuCol === key) {
+          const query = ($("fmSearch") && $("fmSearch").value) || "";
+          renderFilterMenu(key, query);
+          const btn = document.querySelector(`.filter-btn[data-filter="${key}"]`);
+          if (btn) placeFilterMenu(btn);
+        }
+      }
+      function bestPerStudent(logs) {
+        const map = new Map();
+        (logs || []).forEach((e) => {
+          if (!e.studentId && !e.classId) return;
+          const key = studentKey(e.classId, e.studentId);
+          const prev = map.get(key);
+          const better = !prev
+            || (e.done || 0) > (prev.done || 0)
+            || ((e.done || 0) === (prev.done || 0) && (e.avgSec || 99999) < (prev.avgSec || 99999));
+          if (better) map.set(key, e);
+        });
+        return [...map.values()]
+          .filter((e) => (e.done || 0) > 0)
+          .sort((a, b) => {
+            if ((b.done || 0) !== (a.done || 0)) return (b.done || 0) - (a.done || 0);
+            const ta = a.avgSec || 99999, tb = b.avgSec || 99999;
+            if (ta !== tb) return ta - tb;
+            return cmpStudent(a, b);
+          })
+          .slice(0, 10);
+      }
+      async function renderRank(force) {
+        const seq = ++rankSeq;
+        const boxEl = $("rankRecords");
+        if (!boxEl) return;
+        boxEl.innerHTML = `<div class="empty">載入排行榜…</div>`;
+        let logs = [];
+        let fail = false;
+        try { logs = await loadSheetLogs(!!force); }
+        catch (err) { fail = true; }
+        if (seq !== rankSeq) return;
+        if (fail) { boxEl.innerHTML = `<div class="empty">未能連線</div>`; return; }
+        const top = bestPerStudent(logs);
+        if (!top.length) { boxEl.innerHTML = `<div class="empty">未有紀錄</div>`; return; }
+        const ranks = [];
+        top.forEach((e, i) => {
+          ranks.push(i > 0 && (e.done || 0) === (top[i - 1].done || 0) ? ranks[i - 1] : i + 1);
+        });
+        boxEl.innerHTML = `<table>
+          <thead><tr><th class="score-h">名次</th><th>班別學號</th><th class="score-h">答對題數</th></tr></thead>
+          <tbody>${top.map((e, i) => {
+            const n = ranks[i];
+            const cls = n === 1 ? "r1" : n === 2 ? "r2" : n === 3 ? "r3" : "";
+            return `<tr class="${cls}"><td class="rank-cell">${n}</td><td>${escapeHtml(e.classId)} ${escapeHtml(e.studentId)}</td><td class="score-cell">${e.done || 0}</td></tr>`;
+          }).join("")}</tbody></table>`;
+      }
+      async function renderDashboard(filterClass, force) {
+        const seq = ++dashSeq;
+        if (filterClass) dashClass = filterClass;
+        $("studentRecords").innerHTML = `<div class="empty">載入全班分數…</div>`;
+        $("analysisCards").innerHTML = `
+          <div class="stat s1"><b>平均 6 分鐘完成題數</b><strong>…</strong></div>
+          <div class="stat s2"><b>平均錯處次數</b><strong>…</strong></div>
+          <div class="stat s3 errs"><b>三大主要錯處</b><div class="miss3">…</div></div>`;
+        let source = "";
+        try { dashAllLogs = await loadSheetLogs(!!force); source = "Google 試算表"; }
+        catch (err) { dashAllLogs = loadStore().logs; source = "本機（未能連線試算表）"; }
+        if (seq !== dashSeq) return;
+        if ($("dashSource")) $("dashSource").textContent = source;
+        paintDash();
+      }
+
+      const confetti = $("confetti");
+      const cfx = confetti.getContext("2d");
+      let pieces = [];
+      function resizeConfetti() { confetti.width = window.innerWidth; confetti.height = window.innerHeight; }
+      function burstConfetti(count) {
+        const colors = ["#ff7eb6", "#5cc8ff", "#ffe066", "#c9b6ff", "#7eecc8"];
+        for (let i = 0; i < count; i++) {
+          pieces.push({
+            x: confetti.width * (0.2 + Math.random() * 0.6), y: -12,
+            r: 4 + Math.random() * 6, c: colors[i % colors.length],
+            vx: -3 + Math.random() * 6, vy: 3 + Math.random() * 5,
+            rot: Math.random() * 360, vr: -8 + Math.random() * 16,
+            life: 80 + Math.random() * 40, shape: i % 3
+          });
+        }
+      }
+      (function tick() {
+        cfx.clearRect(0, 0, confetti.width, confetti.height);
+        pieces = pieces.filter((p) => p.life > 0);
+        pieces.forEach((p) => {
+          p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.rot += p.vr; p.life -= 1;
+          cfx.save(); cfx.translate(p.x, p.y); cfx.rotate(p.rot * Math.PI / 180);
+          cfx.globalAlpha = Math.max(0, p.life / 70); cfx.fillStyle = p.c;
+          if (p.shape === 0) cfx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
+          else if (p.shape === 1) { cfx.beginPath(); cfx.arc(0, 0, p.r, 0, Math.PI * 2); cfx.fill(); }
+          else { cfx.beginPath(); cfx.moveTo(0, -p.r); cfx.lineTo(p.r, p.r); cfx.lineTo(-p.r, p.r); cfx.fill(); }
+          cfx.restore();
+        });
+        requestAnimationFrame(tick);
+      })();
+      resizeConfetti();
+      window.addEventListener("resize", resizeConfetti);
+
+      $("startBtn").addEventListener("click", startGame);
+      $("classId").addEventListener("keydown", (e) => { if (e.key === "Enter") $("studentId").focus(); });
+      $("studentId").addEventListener("keydown", (e) => { if (e.key === "Enter") startGame(); });
+      $("rankBtn").addEventListener("click", () => { showScreen("rank"); renderRank(true); });
+      $("rankBackBtn").addEventListener("click", () => showScreen("login"));
+      $("rankRefreshBtn").addEventListener("click", () => renderRank(true));
+      $("teacherBtn").addEventListener("click", () => {
+        $("pinModal").classList.add("show");
+        $("pinInput").value = "";
+        $("pinInput").focus();
+      });
+      $("pinCancel").addEventListener("click", () => $("pinModal").classList.remove("show"));
+      $("pinOk").addEventListener("click", () => {
+        if ($("pinInput").value === TEACHER_PIN) {
+          $("pinModal").classList.remove("show");
+          dashFilters = {}; dashSort = { col: "student", dir: "asc" }; dashClass = "ALL"; closeFilterMenu();
+          showScreen("dash");
+          renderDashboard("ALL", true);
+        } else {
+          bounce($("pinInput"));
+          $("pinInput").classList.add("shake");
+          setTimeout(() => $("pinInput").classList.remove("shake"), 400);
+          $("pinInput").value = "";
+        }
+      });
+      $("pinInput").addEventListener("keydown", (e) => { if (e.key === "Enter") $("pinOk").click(); });
+      $("dashBackBtn").addEventListener("click", () => { closeFilterMenu(); showScreen("login"); });
+      $("backLoginBtn").addEventListener("click", () => {
+        if (!state.ended && realAttempt()) { endSession(); return; }
+        stopCountdown();
+        $("studentId").value = "";
+        $("reportModal").classList.remove("show");
+        showScreen("login");
+        $("studentId").focus();
+      });
+      $("reportBackBtn").addEventListener("click", () => {
+        $("reportModal").classList.remove("show");
+        $("studentId").value = "";
+        showScreen("login");
+        $("studentId").focus();
+      });
+      $("printBtn").addEventListener("click", () => window.print());
+      $("classFilter").addEventListener("change", (e) => { dashClass = e.target.value || "ALL"; closeFilterMenu(); paintDash(); });
+      $("clearFiltersBtn").addEventListener("click", () => { dashFilters = {}; closeFilterMenu(); paintDash(); });
+      $("studentRecords").addEventListener("click", (e) => {
+        const fb = e.target.closest(".filter-btn");
+        if (fb) {
+          e.stopPropagation();
+          const key = fb.getAttribute("data-filter");
+          if (dashMenuCol === key && $("dashFilterMenu").classList.contains("show")) closeFilterMenu();
+          else openFilterMenu(key, fb);
+          return;
+        }
+        const sb = e.target.closest(".col-sort");
+        if (!sb) return;
+        const key = sb.getAttribute("data-sort");
+        if (dashSort.col === key) dashSort.dir = dashSort.dir === "desc" ? "asc" : "desc";
+        else dashSort = { col: key, dir: (key === "student" || key === "diagnosis") ? "asc" : "desc" };
+        paintDash();
+      });
+      $("dashFilterMenu").addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-fm]");
+        if (!btn || !dashMenuCol) return;
+        const act = btn.getAttribute("data-fm");
+        const key = dashMenuCol;
+        if (act === "sort-desc") { dashSort = { col: key, dir: "desc" }; paintDash(); }
+        else if (act === "sort-asc") { dashSort = { col: key, dir: "asc" }; paintDash(); }
+        else if (act === "all" || act === "clear") setColFilter(key, null);
+        else if (act === "none") setColFilter(key, new Set());
+        if (act === "sort-desc" || act === "sort-asc") {
+          const anchor = document.querySelector(`.filter-btn[data-filter="${key}"]`);
+          if (anchor) placeFilterMenu(anchor);
+        }
+      });
+      $("dashFilterMenu").addEventListener("change", (e) => {
+        const inp = e.target;
+        if (!inp.matches || !inp.matches("input[type='checkbox'][data-idx]")) return;
+        const key = dashMenuCol;
+        const values = uniqueValues(key);
+        const val = values[Number(inp.getAttribute("data-idx"))];
+        if (val == null) return;
+        const sel = dashFilters[key] ? new Set(dashFilters[key]) : new Set(values);
+        if (inp.checked) sel.add(val); else sel.delete(val);
+        setColFilter(key, sel);
+      });
+      $("dashFilterMenu").addEventListener("input", (e) => {
+        if (e.target.id !== "fmSearch" || !dashMenuCol) return;
+        renderFilterMenu(dashMenuCol, e.target.value);
+        const btn = document.querySelector(`.filter-btn[data-filter="${dashMenuCol}"]`);
+        if (btn) placeFilterMenu(btn);
+      });
+      document.addEventListener("click", (e) => {
+        const menu = $("dashFilterMenu");
+        if (!menu || !menu.classList.contains("show")) return;
+        if (menu.contains(e.target) || e.target.closest(".filter-btn")) return;
+        closeFilterMenu();
+      });
+      $("refreshDashBtn").addEventListener("click", () => renderDashboard($("classFilter").value || "ALL", true));
+      $("dock").addEventListener("click", (e) => {
+        const keyBtn = e.target.closest("[data-key]");
+        if (keyBtn) { onKey(keyBtn.getAttribute("data-key")); return; }
+        if (e.target.closest("[data-done]")) finishDiv();
+      });
+      $("stage").addEventListener("click", (e) => {
+        const q = state.q;
+        if (!q || state.ended || state.busy) return;
+        if (e.target.closest("[data-chip]")) return;
+        const blanks = [...document.querySelectorAll(".note-col .slotbox")];
+        const hit = e.target.closest(".slotbox");
+        if (hit && q.phase === "exp") {
+          const idx = blanks.indexOf(hit);
+          if (idx >= 0) { q.focus = idx; renderAll(); }
+        }
+      });
+      let drag = null;
+      function clearDragGhost() {
+        document.querySelectorAll(".drag-ghost").forEach((el) => el.remove());
+        document.querySelectorAll(".oslot.over").forEach((el) => el.classList.remove("over"));
+      }
+      function placeChip(q, id, from, to) {
+        if (from >= 0) q.slots[from] = null;
+        if (to == null || to < 0) return;
+        const prev = q.slots[to];
+        q.slots[to] = id;
+        if (prev != null && prev !== id && from >= 0) q.slots[from] = prev;
+      }
+      $("stage").addEventListener("pointerdown", (e) => {
+        const chip = e.target.closest("[data-chip]");
+        const q = state.q;
+        if (!chip || !q || q.phase !== "cmp" || state.ended || state.busy) return;
+        e.preventDefault();
+        const slot = chip.closest("[data-slot]");
+        const ghost = chip.cloneNode(true);
+        ghost.classList.add("drag-ghost");
+        ghost.style.left = e.clientX + "px";
+        ghost.style.top = e.clientY + "px";
+        document.body.appendChild(ghost);
+        drag = {
+          id: Number(chip.getAttribute("data-chip")),
+          from: slot ? Number(slot.getAttribute("data-slot")) : -1,
+          x: e.clientX, y: e.clientY, moved: false,
+          pointerId: e.pointerId
+        };
+        chip.setPointerCapture(e.pointerId);
+      });
+      document.addEventListener("pointermove", (e) => {
+        if (!drag || e.pointerId !== drag.pointerId) return;
+        if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 8) drag.moved = true;
+        const ghost = document.querySelector(".drag-ghost");
+        if (ghost) { ghost.style.left = e.clientX + "px"; ghost.style.top = e.clientY + "px"; }
+        document.querySelectorAll(".oslot.over").forEach((el) => el.classList.remove("over"));
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        const slot = under && under.closest ? under.closest("[data-slot]") : null;
+        if (slot) slot.classList.add("over");
+      });
+      document.addEventListener("pointerup", (e) => {
+        if (!drag || e.pointerId !== drag.pointerId) return;
+        const info = drag;
+        drag = null;
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        clearDragGhost();
+        const q = state.q;
+        if (!q || q.phase !== "cmp") return;
+        const slotEl = under && under.closest ? under.closest("[data-slot]") : null;
+        if (!info.moved) {
+          if (info.from >= 0) q.slots[info.from] = null;
+          else {
+            const empty = q.slots.findIndex((s) => s == null);
+            if (empty >= 0) q.slots[empty] = info.id;
+          }
+        } else if (slotEl) {
+          placeChip(q, info.id, info.from, Number(slotEl.getAttribute("data-slot")));
+        } else if (info.from >= 0) {
+          q.slots[info.from] = null;
+        }
+        renderAll();
+        if (q.slots.every((s) => s != null)) gradeOrder(q.slots.slice());
+      });
+      document.addEventListener("pointercancel", (e) => {
+        if (!drag || e.pointerId !== drag.pointerId) return;
+        drag = null;
+        clearDragGhost();
+      });
+      window.addEventListener("resize", () => { if (state.q) fitBoard(); });
+      document.addEventListener("keydown", (e) => {
+        if (!screens.game.classList.contains("active")) return;
+        const tag = (e.target && e.target.tagName) || "";
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+        if (e.key >= "0" && e.key <= "9") onKey(e.key);
+        else if (e.key === "Backspace") { e.preventDefault(); onKey("del"); }
+        else if (e.key === "Enter") onKey("ok");
+      });
+
+      function selfCheck() {
+        const problems = [];
+        function asFracs(item) {
+          return Array.isArray(item[0]) ? item.map(([n, d]) => [n, d]) : [[item[0], item[1]], [item[2], item[3]]];
+        }
+        function itemKey(fracs) {
+          return fracs.map(([n, d]) => n + "/" + d).sort().join("|");
+        }
+        function nextDivisor(row, largest) {
+          let pick = 0;
+          const max = Math.max.apply(null, row);
+          for (let d = 2; d <= max; d++) {
+            if (row.filter((n) => n % d === 0).length < 2) continue;
+            pick = d;
+            if (!largest) break;
+          }
+          return pick;
+        }
+        function assertPaths(fracs) {
+          const dens = fracs.map((f) => f[1]);
+          const L = lcmAll(dens);
+          function walk(row, divs, depth) {
+            if (!shares(row)) {
+              if (workProduct(divs, row) !== L) problems.push("path:" + itemKey(fracs));
+              return;
+            }
+            if (depth > 12) { problems.push("deep:" + itemKey(fracs)); return; }
+            let any = false;
+            const max = Math.max.apply(null, row);
+            for (let d = 2; d <= max; d++) {
+              if (row.filter((n) => n % d === 0).length < 2) continue;
+              any = true;
+              walk(row.map((n) => n % d === 0 ? n / d : n), divs.concat(d), depth + 1);
+            }
+            if (!any) problems.push("stuck:" + itemKey(fracs));
+          }
+          walk(dens.slice(), [], 0);
+        }
+        function playFracs(fracs, largest) {
+          state.miss = blankMiss();
+          state.ended = false;
+          state.busy = false;
+          state.remain = GAME_SECS;
+          state.q = {
+            fracs: fracs.map(([n, d]) => ({ n, d })),
+            sign: "<",
+            rows: [fracs.map((f) => f[1])],
+            divs: [], phase: "div", entry: "", focus: 0,
+            exp: fracs.map(() => ({ n: "" })),
+            slots: fracs.map(() => null),
+            lcmTries: 0, expTries: 0, anim: null, lcm: 0
+          };
+          let guard = 0;
+          while (state.q.phase === "div" && guard++ < 10) {
+            const d = nextDivisor(state.q.rows[state.q.rows.length - 1], largest);
+            if (!d) { problems.push("no-div:" + itemKey(fracs)); return; }
+            state.q.entry = String(d);
+            state.busy = false;
+            commitDivisor();
+            clearTimeout(animTimer);
+            state.busy = false;
+            if (state.q) state.q.anim = null;
+          }
+          const L = lcmAll(fracs.map((f) => f[1]));
+          const label = itemKey(fracs) + (largest ? ":big" : ":small");
+          if (state.q.phase !== "lcm" || state.q.lcm !== L || state.miss.div || state.miss.lcm) {
+            problems.push("lcm:" + label + ":" + state.q.phase + ":" + state.q.lcm);
+            return;
+          }
+          state.q.entry = String(L);
+          commitLcm();
+          if (state.q.phase !== "exp" || state.miss.lcm || $("hintBar").textContent !== "請填分子") {
+            problems.push("oklcm:" + label + ":" + $("hintBar").textContent);
+            return;
+          }
+          state.q.exp = state.q.fracs.map((f) => ({ n: String(f.n * (L / f.d)) }));
+          commitExp();
+          if (state.q.phase !== "cmp" || state.miss.num || $("hintBar").textContent !== "請拖入框" || document.querySelector(".slotbox.bad")) {
+            problems.push("okexp:" + label + ":" + $("hintBar").textContent);
+            return;
+          }
+          const saved = succeed;
+          let accepted = 0;
+          succeed = function () { accepted += 1; };
+          ["<", ">"].forEach((sign) => {
+            state.q.sign = sign;
+            gradeOrder(expectedOrder(state.q));
+          });
+          succeed = saved;
+          if (accepted !== 2 || state.miss.cmp || state.miss.dir) problems.push("grade:" + label);
+        }
+        const seen = new Set();
+        [TWO, THREE].forEach((bank, bi) => {
+          const lcms = bank.map((tier) => tier.map((item) => {
+            const fracs = asFracs(item);
+            const key = itemKey(fracs);
+            if (seen.has(key)) problems.push("dup:" + key);
+            seen.add(key);
+            const dens = fracs.map((f) => f[1]);
+            const L = lcmAll(dens);
+            if (L > 50) problems.push("cap:" + key);
+            if (!shares(dens)) problems.push("skip:" + key);
+            if (bi === 1 && dens.some((d) => d > 12)) problems.push("den:" + key);
+            fracs.forEach(([n, d]) => { if (gcd(n, d) !== 1 || n >= d) problems.push("form:" + key); });
+            const vals = fracs.map(([n, d]) => n / d);
+            if (new Set(vals).size < vals.length) problems.push("tie:" + key);
+            assertPaths(fracs);
+            playFracs(fracs, false);
+            playFracs(fracs.slice().reverse(), true);
+            return L;
+          }));
+          for (let i = 1; i < lcms.length; i++) {
+            if (Math.max.apply(null, lcms[i - 1]) > Math.min.apply(null, lcms[i])) problems.push("order-tier:" + bi + ":" + i);
+          }
+        });
+        state.miss = blankMiss();
+        const step = splitRow([4, 3, 6], 2);
+        if (step.next.join() !== "2,3,3" || step.copies.join() !== "false,true,false") problems.push("copy-3");
+        if (splitRow([8, 12, 18], 2).copies.some(Boolean)) problems.push("all-divide");
+        if (splitRow([6, 9], 2).copies.filter((c) => !c).length >= 2) problems.push("two-should-reject");
+        if (workProduct([2, 2, 3], [2, 1, 3]) !== lcmAll([8, 12, 18])) problems.push("lcm-3");
+        if (workProduct([2, 3], [2, 3]) !== lcm(12, 18)) problems.push("lcm-2");
+        if (shares([2, 1, 3])) problems.push("shares-done");
+        if (!shares([2, 3, 4])) problems.push("shares-open");
+        state.ended = false; state.busy = false; state.remain = GAME_SECS; state.miss = blankMiss();
+        state.q = {
+          fracs: [{ n: 3, d: 4 }, { n: 2, d: 3 }, { n: 5, d: 6 }],
+          sign: "<", rows: [[4, 3, 6]], divs: [], phase: "div", entry: "2",
+          focus: 0, exp: [{ n: "" }, { n: "" }, { n: "" }],
+          slots: [null, null, null], lcmTries: 0, expTries: 0, anim: null, lcm: 0
+        };
+        commitDivisor();
+        if (!state.q.anim || state.q.anim.copies.join() !== "false,true,false") problems.push("anim");
+        if (state.q.rows[1].join() !== "2,3,3") problems.push("row2");
+        state.busy = false; state.q.anim = null; state.q.entry = "3";
+        commitDivisor();
+        state.busy = false; state.q.anim = null;
+        if (state.q.phase !== "lcm" || state.q.lcm !== 12) problems.push("auto:" + state.q.lcm + ":" + state.q.phase);
+        if (document.querySelector("[data-done]")) problems.push("done-btn");
+        const skip = {
+          fracs: [{ n: 1, d: 3 }, { n: 2, d: 5 }],
+          rows: [[3, 5]], divs: [], phase: "div", entry: "", lcm: 0
+        };
+        if (!settleDiv(skip) || skip.phase !== "lcm" || skip.lcm !== 15) problems.push("skip");
+        state.q.entry = "18";
+        commitLcm();
+        if (state.miss.lcm !== 1 || state.q.phase !== "lcm") problems.push("bad-lcm");
+        if ($("hintBar").textContent !== "請再計算") problems.push("hint1:" + $("hintBar").textContent);
+        state.q.entry = "18";
+        commitLcm();
+        if (state.miss.lcm !== 2 || $("hintBar").textContent !== "請再計算 2×3×2×1×1") problems.push("hint2:" + $("hintBar").textContent);
+        state.q.entry = "12";
+        commitLcm();
+        if (state.q.phase !== "exp") problems.push("to-exp");
+        state.q.exp = [{ n: "9" }, { n: "8" }, { n: "1" }];
+        commitExp();
+        if (state.miss.num !== 1 || $("hintBar").textContent !== "請再計算") problems.push("exp1:" + $("hintBar").textContent);
+        const boxes = [...document.querySelectorAll(".eq .frac .slotbox")];
+        const badCount = boxes.filter((b) => b.classList.contains("bad")).length;
+        if (boxes.length !== 3 || badCount !== 1 || !boxes[2].classList.contains("bad")) problems.push("red:" + boxes.map((b) => b.className).join("/"));
+        const fontOf = (sel) => { const el = document.querySelector(sel); return el ? getComputedStyle(el).fontSize : ""; };
+        if (fontOf(".cmp-title") !== fontOf(".cmp-title .frac")) problems.push("title-size");
+        if (fontOf(".lcm-line") !== fontOf(".cmp-title")) problems.push("lcm-size");
+        if (fontOf(".eq") !== fontOf(".cmp-title")) problems.push("eq-size");
+        if (fontOf(".ncell") !== fontOf(".dcell")) problems.push("ladder-size");
+        state.q.exp = [{ n: "9" }, { n: "8" }, { n: "1" }];
+        commitExp();
+        if ($("hintBar").textContent !== "請再計算 5×2") problems.push("exp2:" + $("hintBar").textContent);
+        state.q.exp = [{ n: "9" }, { n: "8" }, { n: "10" }];
+        commitExp();
+        if (state.q.phase !== "cmp") problems.push("to-cmp");
+        const expect = expectedOrder(state.q).join();
+        if (expect !== "1,0,2") problems.push("order:" + expect);
+        document.documentElement.dataset.test = problems.length ? problems.join(",") : "ok";
+      }
+      function studentPlay() {
+        const problems = [];
+        const savedSend = sendToGoogleSheet;
+        sendToGoogleSheet = function () { problems.push("posted"); };
+        $("classId").value = "";
+        $("studentId").value = "";
+        $("startBtn").click();
+        if (screens.game.classList.contains("active")) problems.push("empty-start");
+        state.classId = "5A";
+        state.studentId = "01";
+        state.qIndex = 1;
+        state.done = 0;
+        state.qTimes = [];
+        state.miss = blankMiss();
+        state.ended = false;
+        state.busy = false;
+        state.remain = GAME_SECS;
+        bag2 = [[], [], []];
+        bag3 = [[], [], []];
+        showScreen("game");
+        renderTimer();
+        if ($("timer").textContent.indexOf("06:00") < 0) problems.push("clock:" + $("timer").textContent);
+        const bands = [[0, 12], [0, 12], [14, 24], [18, 24], [30, 50], [28, 50]];
+        for (let n = 0; n < 6; n++) {
+          freshQuestion();
+          const dens = state.q.fracs.map((f) => f.d);
+          const L = lcmAll(dens);
+          const two = state.q.fracs.length === 2;
+          if (state.q.phase !== "div") problems.push("skip-div:" + n);
+          if ((n % 2 === 0) !== two) problems.push("task:" + n);
+          if (L < bands[n][0] || L > bands[n][1]) problems.push("tier:" + n + ":" + L);
+          if ($("taskTitle").textContent !== (two ? "任務一：兩個分數" : "任務二：三個分數")) problems.push("title:" + n);
+          if ($("hintBar").textContent !== "請填除數") problems.push("hint0:" + $("hintBar").textContent);
+          state.qIndex += 1;
+        }
+        function arm(fracs) {
+          state.ended = false;
+          state.busy = false;
+          state.remain = 360;
+          state.miss = blankMiss();
+          state.qIndex = 1;
+          state.q = {
+            fracs: fracs.map(([n, d]) => ({ n, d })),
+            sign: "<",
+            rows: [fracs.map((f) => f[1])],
+            divs: [], phase: "div", entry: "", focus: 0,
+            exp: fracs.map(() => ({ n: "" })),
+            slots: fracs.map(() => null),
+            lcmTries: 0, expTries: 0, anim: null, lcm: 0
+          };
+          state.qStart = Date.now();
+          showScreen("game");
+          renderAll();
+        }
+        function press(k) {
+          const btn = [...document.querySelectorAll("[data-key]")].find((el) => el.getAttribute("data-key") === k);
+          if (!btn) { problems.push("no-key:" + k); return; }
+          btn.click();
+        }
+        arm([[3, 4], [5, 6]]);
+        press("ok");
+        if (state.miss.div || $("hintBar").textContent !== "請填除數" || state.remain !== 360) problems.push("blank-div");
+        press("1");
+        press("ok");
+        if ($("hintBar").textContent !== "除數要整除這兩個數" || state.miss.div !== 1 || state.remain !== 355) problems.push("bad-div2:" + $("hintBar").textContent + ":" + state.remain);
+        press("2");
+        press("ok");
+        if (!state.busy || state.q.phase !== "lcm" || state.q.lcm !== 12) problems.push("after2:" + state.q.phase + ":" + state.q.lcm);
+        press("1");
+        if (state.q.entry !== "1") problems.push("lost-key:" + state.q.entry);
+        clearTimeout(animTimer);
+        state.busy = false;
+        state.q.anim = null;
+        state.q.entry = "";
+        renderAll();
+        press("ok");
+        if (state.miss.lcm || $("hintBar").textContent !== "請填最小公倍數" || state.remain !== 355) problems.push("blank-lcm");
+        press("1");
+        press("8");
+        press("ok");
+        if (state.miss.lcm !== 1 || $("hintBar").textContent !== "請再計算") problems.push("lcm1");
+        press("1");
+        press("8");
+        press("ok");
+        if ($("hintBar").textContent !== "請再計算 2×2×3") problems.push("lcm2:" + $("hintBar").textContent);
+        press("1");
+        press("2");
+        press("ok");
+        if (state.q.phase !== "exp" || $("hintBar").textContent !== "請填分子") problems.push("to-exp");
+        press("9");
+        press("1");
+        press("1");
+        press("ok");
+        const badBoxes = [...document.querySelectorAll(".slotbox.bad")];
+        if (state.miss.num !== 1 || badBoxes.length !== 1 || $("hintBar").textContent !== "請再計算") problems.push("red:" + badBoxes.length);
+        const firstBox = document.querySelector(".note-col .slotbox");
+        firstBox.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        if (state.q.focus !== 0) problems.push("refocus:" + state.q.focus);
+        state.q.exp = [{ n: "" }, { n: "" }];
+        state.q.focus = 0;
+        state.q.badNums = null;
+        renderAll();
+        press("9");
+        press("1");
+        press("0");
+        press("ok");
+        if (state.q.phase !== "cmp" || $("hintBar").textContent !== "請拖入框" || state.miss.num !== 1) problems.push("to-cmp");
+        const beforeDone = state.done;
+        gradeOrder([1, 0]);
+        if (state.miss.cmp !== 1 || state.miss.dir || state.done !== beforeDone || $("hintBar").textContent !== "請再比較") problems.push("two-wrong");
+        gradeOrder([0, 1]);
+        if (state.qIndex !== 2 || state.done !== beforeDone + 1) problems.push("pass-two");
+        arm([[3, 4], [2, 3], [5, 6]]);
+        press("5");
+        press("ok");
+        if ($("hintBar").textContent !== "除數要整除其中兩個數" || state.miss.div !== 1) problems.push("bad-div3:" + $("hintBar").textContent);
+        press("2");
+        press("ok");
+        clearTimeout(animTimer);
+        state.busy = false;
+        state.q.anim = null;
+        press("3");
+        press("ok");
+        clearTimeout(animTimer);
+        state.busy = false;
+        state.q.anim = null;
+        if (state.q.phase !== "lcm" || state.q.lcm !== 12) problems.push("three-lcm:" + state.q.lcm);
+        ["1", "2", "ok"].forEach(press);
+        ["9", "8", "1", "0"].forEach(press);
+        press("ok");
+        if (state.q.phase !== "cmp") problems.push("three-cmp");
+        state.q.slots = [2, 0, 1];
+        gradeOrder([2, 0, 1]);
+        if (state.miss.dir !== 1 || $("hintBar").textContent !== "請再比較") problems.push("reverse:" + state.miss.dir + ":" + $("hintBar").textContent);
+        state.q.slots = [1, 0, 2];
+        const done3 = state.done;
+        gradeOrder([1, 0, 2]);
+        if (state.done !== done3 + 1) problems.push("three-pass");
+        sendToGoogleSheet = savedSend;
+        stopCountdown();
+        document.documentElement.dataset.test = problems.length ? problems.slice(0, 12).join(",") : "ok";
+      }
+      if (location.hash === "#selftest") selfCheck();
+      if (location.hash === "#playtest") studentPlay();
+      if (location.hash.indexOf("#preview") === 0) {
+        state.classId = "5A"; state.studentId = "01";
+        const mode = location.hash.slice(1);
+        const base = {
+          fracs: [{ n: 3, d: 4 }, { n: 2, d: 3 }, { n: 5, d: 6 }],
+          sign: "<",
+          rows: [[4, 3, 6], [2, 3, 3]],
+          divs: [2],
+          phase: "div", entry: "", focus: 0,
+          exp: [{ n: "" }, { n: "" }, { n: "" }],
+          slots: [null, null, null],
+          lcmTries: 0, expTries: 0,
+          anim: { from: 0, copies: [false, true, false] }, lcm: 0
+        };
+        if (mode === "preview-start") {
+          base.rows = [[4, 3, 6]];
+          base.divs = [];
+          base.anim = null;
+        } else if (mode === "preview-lcm") {
+          base.rows = [[4, 3, 6], [2, 3, 3], [2, 1, 1]];
+          base.divs = [2, 3];
+          base.phase = "lcm";
+          base.anim = null;
+          base.lcm = 12;
+        } else if (mode === "preview-exp" || mode === "preview-exp-bad") {
+          base.rows = [[4, 3, 6], [2, 3, 3], [2, 1, 1]];
+          base.divs = [2, 3];
+          base.phase = "exp";
+          base.anim = null;
+          base.lcm = 12;
+          base.exp = mode === "preview-exp-bad" ? [{ n: "9" }, { n: "7" }, { n: "10" }] : [{ n: "9" }, { n: "" }, { n: "" }];
+          base.focus = 1;
+          base.badNums = mode === "preview-exp-bad" ? [false, true, false] : null;
+          base.expTries = mode === "preview-exp-bad" ? 1 : 0;
+        } else if (mode === "preview-two" || mode === "preview-two-cmp") {
+          base.fracs = [{ n: 5, d: 6 }, { n: 7, d: 9 }];
+          base.rows = mode === "preview-two" ? [[6, 9]] : [[6, 9], [2, 3]];
+          base.divs = mode === "preview-two" ? [] : [3];
+          base.phase = mode === "preview-two" ? "div" : "cmp";
+          base.anim = null;
+          base.lcm = mode === "preview-two" ? 0 : 18;
+          base.sign = ">";
+          base.exp = [{ n: "" }, { n: "" }];
+          base.slots = [null, null];
+        } else if (mode === "preview-order" || mode === "preview-cmp") {
+          base.rows = [[4, 3, 6], [2, 3, 3], [2, 1, 1]];
+          base.divs = [2, 3];
+          base.phase = "cmp";
+          base.anim = null;
+          base.lcm = 12;
+          base.sign = mode === "preview-cmp" ? ">" : "<";
+        }
+        state.qIndex = base.fracs.length === 2 ? 1 : 2;
+        state.q = base;
+        showScreen("game");
+        $("playerPill").textContent = "5A 01";
+        setHint(mode === "preview-exp-bad" ? "請再計算" : base.phase === "div" ? "請填除數" : base.phase === "lcm" ? "請計算最小公倍數" : base.phase === "exp" ? "請填分子" : "請拖入框");
+        renderAll();
+      }
+    })();
+  </script>
+</body>
+</html>
