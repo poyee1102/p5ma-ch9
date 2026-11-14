@@ -455,11 +455,11 @@
         <h1 class="title" id="titleWave"></h1>
         <div class="field">
           <label for="classId">班別</label>
-          <input id="classId" maxlength="8" placeholder="5A" autocomplete="off" />
+          <input id="classId" maxlength="5" placeholder="5A" autocomplete="off" autocapitalize="characters" spellcheck="false" />
         </div>
         <div class="field">
           <label for="studentId">學號</label>
-          <input id="studentId" maxlength="6" placeholder="01" inputmode="numeric" autocomplete="off" />
+          <input id="studentId" maxlength="5" placeholder="01" autocomplete="off" autocapitalize="characters" spellcheck="false" />
         </div>
         <button class="candy pink start" id="startBtn">開始任務</button>
         <div class="login-acts">
@@ -555,7 +555,6 @@
       const GAME_ID = "p5ma-ch9";
       const CHAPTER = "p5ma-ch9";
       const STORE_KEY = "p5ma-ch9-v1";
-      const TEACHER_PIN = "2246";
       const GAME_SECS = 360;
       const PENALTY_SECS = 5;
       const TITLE = "通分大師：比較分數";
@@ -713,6 +712,9 @@
         } catch (e) { return { students: {}, logs: [] }; }
       }
       function saveStore(data) { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+      function keepCode(value) {
+        return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
+      }
       function normalizeId(id) {
         const raw = String(id || "").trim();
         return /^\d+$/.test(raw) ? raw.padStart(2, "0") : raw;
@@ -796,10 +798,15 @@
           document.body.appendChild(s);
         });
       }
-      async function loadSheetLogs(force) {
-        if (sheetLogsCache && !force) return sheetLogsCache;
+      let dashPin = "";
+      let dashLogsCache = null;
+      async function loadSheetLogs(force, pin) {
+        const forDash = !!pin;
+        if (!forDash && sheetLogsCache && !force) return sheetLogsCache;
+        if (forDash && dashLogsCache && !force) return dashLogsCache;
         if (!sheetConfigured()) throw new Error("no-url");
-        const url = GOOGLE_SHEET_URL + "?game=" + encodeURIComponent(GAME_ID);
+        let url = GOOGLE_SHEET_URL + "?game=" + encodeURIComponent(GAME_ID);
+        if (pin) url += "&pin=" + encodeURIComponent(pin);
         let data = null;
         try {
           const res = await fetch(url, { method: "GET" });
@@ -807,8 +814,10 @@
           data = await res.json();
         } catch (err) { data = await jsonpSheet(url); }
         if (!data || !data.ok) throw new Error("bad");
-        sheetLogsCache = rowsToLogs(data.rows);
-        return sheetLogsCache;
+        const logs = rowsToLogs(data.rows);
+        if (forDash) dashLogsCache = logs;
+        else sheetLogsCache = logs;
+        return logs;
       }
       function saveSession() {
         const d = diagnose();
@@ -1181,8 +1190,8 @@
       }
 
       function startGame() {
-        const classId = $("classId").value.trim().toUpperCase();
-        const studentId = $("studentId").value.trim();
+        const classId = keepCode($("classId").value);
+        const studentId = keepCode($("studentId").value);
         if (!classId || !studentId) { bounce($("startBtn")); return; }
         unlockAudio();
         state.classId = classId; state.studentId = studentId;
@@ -1516,7 +1525,7 @@
           <div class="stat s2"><b>平均錯處次數</b><strong>…</strong></div>
           <div class="stat s3 errs"><b>三大主要錯處</b><div class="miss3">…</div></div>`;
         let source = "";
-        try { dashAllLogs = await loadSheetLogs(!!force); source = "Google 試算表"; }
+        try { dashAllLogs = await loadSheetLogs(!!force, dashPin); source = "Google 試算表"; }
         catch (err) { dashAllLogs = loadStore().logs; source = "本機（未能連線試算表）"; }
         if (seq !== dashSeq) return;
         if ($("dashSource")) $("dashSource").textContent = source;
@@ -1559,6 +1568,14 @@
       $("startBtn").addEventListener("click", startGame);
       $("classId").addEventListener("keydown", (e) => { if (e.key === "Enter") $("studentId").focus(); });
       $("studentId").addEventListener("keydown", (e) => { if (e.key === "Enter") startGame(); });
+      function bindCode(el) {
+        el.addEventListener("input", () => {
+          const next = keepCode(el.value);
+          if (next !== el.value) el.value = next;
+        });
+      }
+      bindCode($("classId"));
+      bindCode($("studentId"));
       $("rankBtn").addEventListener("click", () => { showScreen("rank"); renderRank(true); });
       $("rankBackBtn").addEventListener("click", () => showScreen("login"));
       $("rankRefreshBtn").addEventListener("click", () => renderRank(true));
@@ -1568,18 +1585,32 @@
         $("pinInput").focus();
       });
       $("pinCancel").addEventListener("click", () => $("pinModal").classList.remove("show"));
-      $("pinOk").addEventListener("click", () => {
-        if ($("pinInput").value === TEACHER_PIN) {
-          $("pinModal").classList.remove("show");
-          dashFilters = {}; dashSort = { col: "student", dir: "asc" }; dashClass = "ALL"; closeFilterMenu();
-          showScreen("dash");
-          renderDashboard("ALL", true);
-        } else {
+            $("pinOk").addEventListener("click", async () => {
+        const typed = $("pinInput").value;
+        const btn = $("pinOk");
+        const reject = () => {
+          dashPin = "";
           bounce($("pinInput"));
           $("pinInput").classList.add("shake");
           setTimeout(() => $("pinInput").classList.remove("shake"), 400);
           $("pinInput").value = "";
+        };
+        if (!typed || btn.disabled) { reject(); return; }
+        btn.disabled = true;
+        let opened = false;
+        try {
+          await loadSheetLogs(true, typed);
+          dashPin = typed;
+          opened = true;
+        } catch (err) {
+          dashPin = "";
         }
+        btn.disabled = false;
+        if (!opened) { reject(); return; }
+          $("pinModal").classList.remove("show");
+          dashFilters = {}; dashSort = { col: "student", dir: "asc" }; dashClass = "ALL"; closeFilterMenu();
+          showScreen("dash");
+          renderDashboard("ALL", true);
       });
       $("pinInput").addEventListener("keydown", (e) => { if (e.key === "Enter") $("pinOk").click(); });
       $("dashBackBtn").addEventListener("click", () => { closeFilterMenu(); showScreen("login"); });
