@@ -1616,7 +1616,7 @@
           $("pinModal").classList.remove("show");
           dashFilters = {}; dashSort = { col: "student", dir: "asc" }; dashClass = "ALL"; closeFilterMenu();
           showScreen("dash");
-          renderDashboard("ALL", true);
+          renderDashboard("ALL");
       });
       $("pinInput").addEventListener("keydown", (e) => { if (e.key === "Enter") $("pinOk").click(); });
       $("dashBackBtn").addEventListener("click", () => { closeFilterMenu(); showScreen("login"); });
