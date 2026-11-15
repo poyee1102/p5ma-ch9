@@ -1176,16 +1176,17 @@
         }
         if (q.phase !== "div" && q.phase !== "lcm" && q.phase !== "exp") return;
         if (q.phase === "exp") {
+          if (k === "next") {
+            if (q.focus < q.fracs.length - 1) q.focus += 1;
+            renderAll();
+            return;
+          }
           let cur = q.exp[q.focus].n;
           if (k === "del") cur = cur.slice(0, -1);
           else if (k === "ok") { commitExp(); return; }
           else if (cur.length < 4) cur += k;
           if (k !== "ok" && q.badNums) q.badNums[q.focus] = false;
           q.exp[q.focus].n = cur;
-          if (k !== "ok" && k !== "del" && cur.length) {
-            const expect = String(q.fracs[q.focus].n * (q.lcm / q.fracs[q.focus].d));
-            if (cur.length >= expect.length) q.focus = Math.min(q.fracs.length - 1, q.focus + 1);
-          }
           renderAll();
           return;
         }
@@ -1783,7 +1784,11 @@
         if (tag === "INPUT" || tag === "TEXTAREA") return;
         if (e.key >= "0" && e.key <= "9") onKey(e.key);
         else if (e.key === "Backspace") { e.preventDefault(); onKey("del"); }
-        else if (e.key === "Enter") onKey("ok");
+        else if (e.key === "Enter") {
+          e.preventDefault();
+          if (state.q && state.q.phase === "exp") onKey("next");
+          else onKey("ok");
+        }
       });
 
       function selfCheck() {
@@ -2020,6 +2025,9 @@
           if (!btn) { problems.push("no-key:" + k); return; }
           btn.click();
         }
+        function nextBox() {
+          document.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+        }
         arm([[3, 4], [5, 6]]);
         press("ok");
         if (state.miss.div || $("hintBar").textContent !== "請填除數" || state.remain !== 360) problems.push("blank-div");
@@ -2051,6 +2059,16 @@
         press("ok");
         if (state.q.phase !== "exp" || $("hintBar").textContent !== "請填分子") problems.push("to-exp");
         press("9");
+        press("9");
+        if (state.q.focus !== 0 || state.q.exp[0].n !== "99" || state.q.exp[1].n !== "") problems.push("no-jump");
+        state.q.exp[0].n = "9999";
+        press("1");
+        if (state.q.exp[0].n !== "9999") problems.push("cap");
+        state.q.exp = [{ n: "" }, { n: "" }];
+        state.q.focus = 0;
+        renderAll();
+        press("9");
+        nextBox();
         press("1");
         press("1");
         press("ok");
@@ -2064,6 +2082,7 @@
         state.q.badNums = null;
         renderAll();
         press("9");
+        nextBox();
         press("1");
         press("0");
         press("ok");
@@ -2089,7 +2108,11 @@
         state.q.anim = null;
         if (state.q.phase !== "lcm" || state.q.lcm !== 12) problems.push("three-lcm:" + state.q.lcm);
         ["1", "2", "ok"].forEach(press);
-        ["9", "8", "1", "0"].forEach(press);
+        press("9");
+        nextBox();
+        press("8");
+        nextBox();
+        ["1", "0"].forEach(press);
         press("ok");
         if (state.q.phase !== "cmp") problems.push("three-cmp");
         state.q.slots = [2, 0, 1];
