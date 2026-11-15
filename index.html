@@ -1178,6 +1178,7 @@
         if (q.phase === "exp") {
           if (k === "next") {
             if (q.focus < q.fracs.length - 1) q.focus += 1;
+            else commitExp();
             renderAll();
             return;
           }
@@ -2085,7 +2086,7 @@
         nextBox();
         press("1");
         press("0");
-        press("ok");
+        nextBox();
         if (state.q.phase !== "cmp" || $("hintBar").textContent !== "請拖入框" || state.miss.num !== 1) problems.push("to-cmp");
         const beforeDone = state.done;
         gradeOrder([1, 0]);
@@ -2113,7 +2114,7 @@
         press("8");
         nextBox();
         ["1", "0"].forEach(press);
-        press("ok");
+        nextBox();
         if (state.q.phase !== "cmp") problems.push("three-cmp");
         state.q.slots = [2, 0, 1];
         gradeOrder([2, 0, 1]);
