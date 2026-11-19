@@ -1274,6 +1274,7 @@
             return;
           }
           let cur = q.exp[q.focus].n;
+          if (q.badNums && q.badNums[q.focus] && k >= "0" && k <= "9") cur = "";
           if (k === "del") cur = cur.slice(0, -1);
           else if (k === "ok") { commitExp(); return; }
           else if (cur.length < 4) cur += k;
@@ -2175,6 +2176,8 @@
         press("ok");
         const badBoxes = [...document.querySelectorAll(".slotbox.bad")];
         if (state.miss.num !== 1 || badBoxes.length !== 1 || $("hintBar").textContent !== "請再計算") problems.push("red:" + badBoxes.length);
+        press("2");
+        if (state.q.exp[1].n !== "2" || state.q.badNums[1]) problems.push("replace:" + state.q.exp[1].n);
         const firstBox = document.querySelector(".note-col .slotbox");
         firstBox.dispatchEvent(new MouseEvent("click", { bubbles: true }));
         if (state.q.focus !== 0) problems.push("refocus:" + state.q.focus);
